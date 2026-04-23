@@ -176,6 +176,7 @@ CORS is whitelisted to `http://localhost:5173` only.
 5. **Read `references/known-issues.md` before every debug session.**
 6. **Auto-fix recurring bugs** — fix without asking, then append a new entry to `known-issues.md`.
 7. **Never write code without section comments** explaining each block.
+8. **Commit after every phase** — after testing is complete for each phase, commit all changes to git with a message describing the phase (e.g. `feat: phase 2 — backend API routes`).
 
 ---
 
