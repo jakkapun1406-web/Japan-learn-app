@@ -262,7 +262,7 @@ Do not mix module systems between client and server.
 | cors                  | CORS middleware                          |
 | dotenv                | Load `.env` variables                    |
 | nodemon               | Dev auto-restart                         |
-| adm-zip               | Unzip JMdict release zip (seed script)   |
+| adm-zip               | (removed — not needed after seed rewrite)|
 
 ---
 
@@ -286,24 +286,35 @@ Do not mix module systems between client and server.
 - [x] DeckCard: `isJlpt` prop, JLPT badge, no delete button for JLPT decks
 - [x] VocabPage: view + add vocab (works for both deck types)
 - [x] Flashcard review UI (ReviewPage + SRS)
-- [ ] **SEED SCRIPT BROKEN** — `seedJlptVocabFull.js` uses a dead URL (HTTP 404)
-      Fix: switch to jmdict-simplified zip + adm-zip parser
+- [x] Seed script fixed — uses `jlpt-vocab-api.vercel.app` (8,385 words total)
+- [x] N5 seeded: 662 entries in `jlpt_vocab` ✓
+- [x] N4 seeded: 632 entries in `jlpt_vocab` ✓
+- [ ] N3/N2/N1 seed — in progress (running background)
+- [ ] Run SQL migration 003 in Supabase SQL Editor (if not yet done)
+- [ ] End-to-end test: login → Dashboard → JLPT decks auto-created → review works
+
+---
+
+## Data Sources
+
+| Source | URL | Notes |
+|--------|-----|-------|
+| JLPT Vocab API | `https://jlpt-vocab-api.vercel.app/api/words/all?level=5` | Confirmed working. level=5→N5, 4→N4, etc. |
+| jmdict-simplified v3 | — | No JLPT tags in v3, not suitable |
+| jbrooksuk/JLPT-Vocabulary | — | HTTP 404, repo gone |
 
 ---
 
 ## Last Working On
 
-Rewriting `server/scripts/seedJlptVocabFull.js` to use the correct JMdict data source:
-- **Broken URL**: `https://raw.githubusercontent.com/jbrooksuk/JLPT-Vocabulary/master/jlpt_n5.json` (404)
-- **Working URL**: `https://github.com/scriptin/jmdict-simplified/releases/download/3.6.2%2B20260420131912/jmdict-eng-common-3.6.2%2B20260420131912.json.zip`
-- Format: `words[]` each with `kanji[].tags` or `kana[].tags` containing `"jlpt-n5"` etc.
-- Requires `adm-zip` npm package in server/
+- Fixed `server/scripts/seedJlptVocabFull.js` — now uses JLPT Vocab API with Claude Haiku translation
+- Seeding N3/N2/N1 into `jlpt_vocab` table (background process)
 
 ---
 
 ## Next Steps
 
-1. **Fix seed script**: install `adm-zip`, rewrite `seedJlptVocabFull.js` to use jmdict-simplified
-2. Run migrations 001–003 in Supabase SQL Editor (if not already done)
-3. Run `node scripts/seedJlptVocabFull.js n5` to test, then full seed
-4. Test full flow: login → Dashboard shows JLPT N5–N1 decks automatically
+1. Confirm N3/N2/N1 seed completed (check Supabase `jlpt_vocab` row count)
+2. Run migration `003_add_deck_type.sql` in Supabase SQL Editor (if not done)
+3. Test full flow: login → Dashboard shows JLPT N5–N1 automatically
+4. Verify review session works per deck (JLPT and user decks separate)
