@@ -25,3 +25,11 @@ export const addVocabCard = async (deckId, card) => {
 export const deleteVocabCard = async (deckId, cardId) => {
   await apiClient.delete(`/api/decks/${deckId}/vocab/${cardId}`);
 };
+
+// ============================================================
+// IMPORT VOCAB — copy คำศัพท์จากคลัง JLPT เข้า deck
+// ============================================================
+export const importVocabFromJlpt = async (deckId, jlpt_level) => {
+  const { data } = await apiClient.post(`/api/decks/${deckId}/import`, { jlpt_level });
+  return data; // { imported, total_available, message }
+};

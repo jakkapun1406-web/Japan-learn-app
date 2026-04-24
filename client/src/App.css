@@ -711,6 +711,30 @@ body {
 }
 
 /* ============================================================
+   JLPT DECK STYLES
+   ============================================================ */
+.deck-card.jlpt-deck {
+  background: #fafafe;
+}
+
+.badge-jlpt {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #667eea;
+  background: #eef0ff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.section-subtitle {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* ============================================================
    MOBILE RESPONSIVE
    ============================================================ */
 @media (max-width: 600px) {

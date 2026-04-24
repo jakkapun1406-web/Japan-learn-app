@@ -3,6 +3,7 @@
 // ============================================================
 const express = require('express');
 const { getDecks, createDeck, deleteDeck } = require('../controllers/deck.controller');
+const { importVocab } = require('../controllers/jlptVocab.controller');
 const { requireAuth } = require('../middleware/auth.middleware');
 
 const router = express.Router();
@@ -10,9 +11,10 @@ const router = express.Router();
 // ============================================================
 // DECK ROUTES — ทุก route ต้องผ่าน requireAuth
 // ============================================================
-router.get('/',     requireAuth, getDecks);     // GET  /api/decks
-router.post('/',    requireAuth, createDeck);   // POST /api/decks
-router.delete('/:id', requireAuth, deleteDeck); // DELETE /api/decks/:id
+router.get('/',                    requireAuth, getDecks);     // GET    /api/decks
+router.post('/',                   requireAuth, createDeck);   // POST   /api/decks
+router.delete('/:id',              requireAuth, deleteDeck);   // DELETE /api/decks/:id
+router.post('/:deckId/import',     requireAuth, importVocab);  // POST   /api/decks/:deckId/import
 
 // ============================================================
 // EXPORTS

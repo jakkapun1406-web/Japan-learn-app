@@ -38,7 +38,7 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <h1>🇯🇵 Japanese App</h1>
+        <h1>Japanese App</h1>
         <h2>เข้าสู่ระบบ</h2>
 
         {error && <div className="error-msg">{error}</div>}

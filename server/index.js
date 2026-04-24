@@ -5,10 +5,12 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const authRoutes   = require('./routes/auth.routes');
-const deckRoutes   = require('./routes/deck.routes');
-const vocabRoutes  = require('./routes/vocab.routes');
-const reviewRoutes = require('./routes/review.routes');
+const authRoutes      = require('./routes/auth.routes');
+const deckRoutes      = require('./routes/deck.routes');
+const vocabRoutes     = require('./routes/vocab.routes');
+const reviewRoutes    = require('./routes/review.routes');
+const jlptVocabRoutes = require('./routes/jlptVocab.routes');
+const jlptDeckRoutes  = require('./routes/jlptDeck.routes');
 
 // ============================================================
 // APP SETUP
@@ -29,6 +31,8 @@ app.use('/api/auth',              authRoutes);
 app.use('/api/decks',             deckRoutes);
 app.use('/api/decks/:deckId/vocab',  vocabRoutes);
 app.use('/api/decks/:deckId/review', reviewRoutes);
+app.use('/api/jlpt-vocab',           jlptVocabRoutes);
+app.use('/api/jlpt-decks',           jlptDeckRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -57,7 +57,7 @@ const createDeck = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('user_decks')
-      .insert({ user_id: userId, name, jlpt_level })
+      .insert({ user_id: userId, name, jlpt_level, deck_type: 'user' })
       .select()
       .single();
 

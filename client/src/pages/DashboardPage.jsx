@@ -4,8 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { JLPT_LEVELS, JLPT_COLORS, JLPT_DESCRIPTIONS } from '../constants/jlptLevels';
-import { getDecks, createDeck, deleteDeck } from '../services/deckService';
+import { getDecks, createDeck, deleteDeck, initJlptDecks } from '../services/deckService';
 import DeckCard from '../components/Deck/DeckCard';
 import CreateDeckModal from '../components/Deck/CreateDeckModal';
 
@@ -17,23 +16,38 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   // --- STATE ---
-  const [decks, setDecks] = useState([]);
+  const [jlptDecks, setJlptDecks]     = useState([]);
+  const [userDecks, setUserDecks]     = useState([]);
   const [loadingDecks, setLoadingDecks] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [error, setError] = useState('');
+  const [showModal, setShowModal]     = useState(false);
+  const [error, setError]             = useState('');
 
   // --- HOOKS ---
   useEffect(() => {
-    fetchDecks();
+    bootstrap();
   }, []);
 
   // --- HANDLERS ---
-  const fetchDecks = async () => {
+
+  // โหลด deck ทั้งหมด แล้ว init JLPT decks ถ้ายังไม่มี
+  const bootstrap = async () => {
     setLoadingDecks(true);
     setError('');
     try {
-      const data = await getDecks();
-      setDecks(data);
+      const all = await getDecks();
+      const jlpt = all.filter((d) => d.deck_type === 'jlpt');
+      const user = all.filter((d) => d.deck_type !== 'jlpt');
+
+      if (jlpt.length === 0) {
+        // สร้าง JLPT decks ครั้งแรก แล้ว reload
+        await initJlptDecks();
+        const refreshed = await getDecks();
+        setJlptDecks(refreshed.filter((d) => d.deck_type === 'jlpt'));
+        setUserDecks(refreshed.filter((d) => d.deck_type !== 'jlpt'));
+      } else {
+        setJlptDecks(jlpt);
+        setUserDecks(user);
+      }
     } catch (err) {
       setError(err.response?.data?.error || err.message);
     } finally {
@@ -43,14 +57,14 @@ export default function DashboardPage() {
 
   const handleCreate = async (name, jlptLevel) => {
     const newDeck = await createDeck(name, jlptLevel);
-    setDecks((prev) => [newDeck, ...prev]);
+    setUserDecks((prev) => [newDeck, ...prev]);
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('ลบ deck นี้ใช่ไหม? คำศัพท์ทั้งหมดจะถูกลบด้วย')) return;
     try {
       await deleteDeck(id);
-      setDecks((prev) => prev.filter((d) => d.id !== id));
+      setUserDecks((prev) => prev.filter((d) => d.id !== id));
     } catch (err) {
       setError(err.response?.data?.error || err.message);
     }
@@ -74,23 +88,24 @@ export default function DashboardPage() {
 
       <main className="dashboard-content">
 
-        {/* ---- JLPT LEVELS ---- */}
+        {error && <p className="error-msg">{error}</p>}
+
+        {/* ---- JLPT DECKS ---- */}
         <section>
           <h2>JLPT Decks</h2>
-          <p>เลือกระดับที่ต้องการเรียน</p>
-          <div className="level-grid">
-            {JLPT_LEVELS.map((level) => (
-              <div
-                key={level}
-                className="level-card"
-                style={{ borderColor: JLPT_COLORS[level] }}
-                onClick={() => navigate(`/decks/${level}`)}
-              >
-                <h3 style={{ color: JLPT_COLORS[level] }}>{level}</h3>
-                <p>{JLPT_DESCRIPTIONS[level]}</p>
-              </div>
-            ))}
-          </div>
+          <p className="section-subtitle">คลังคำศัพท์มาตรฐาน JLPT พร้อมใช้งาน</p>
+
+          {loadingDecks ? (
+            <p className="loading-text">กำลังโหลด...</p>
+          ) : (
+            <div className="deck-grid">
+              {jlptDecks
+                .sort((a, b) => a.jlpt_level.localeCompare(b.jlpt_level))
+                .map((deck) => (
+                  <DeckCard key={deck.id} deck={deck} isJlpt onDelete={() => {}} />
+                ))}
+            </div>
+          )}
         </section>
 
         {/* ---- MY DECKS ---- */}
@@ -102,16 +117,14 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {error && <p className="error-msg">{error}</p>}
-
           {loadingDecks ? (
             <p className="loading-text">กำลังโหลด...</p>
-          ) : decks.length === 0 ? (
+          ) : userDecks.length === 0 ? (
             <p className="empty-state">ยังไม่มี deck — กด "+ สร้าง Deck" เพื่อเริ่มต้น</p>
           ) : (
             <div className="deck-grid">
-              {decks.map((deck) => (
-                <DeckCard key={deck.id} deck={deck} onDelete={handleDelete} />
+              {userDecks.map((deck) => (
+                <DeckCard key={deck.id} deck={deck} isJlpt={false} onDelete={handleDelete} />
               ))}
             </div>
           )}

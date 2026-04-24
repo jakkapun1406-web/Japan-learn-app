@@ -6,8 +6,9 @@ import { JLPT_COLORS } from '../../constants/jlptLevels';
 
 // ============================================================
 // DECK CARD — แสดง deck พร้อม actions
+// isJlpt: true = JLPT deck (ไม่มีปุ่มลบ, แสดง badge JLPT)
 // ============================================================
-export default function DeckCard({ deck, onDelete }) {
+export default function DeckCard({ deck, onDelete, isJlpt = false }) {
   const navigate = useNavigate();
 
   // --- HANDLERS ---
@@ -18,12 +19,20 @@ export default function DeckCard({ deck, onDelete }) {
 
   // --- RENDER ---
   return (
-    <div className="deck-card" style={{ borderColor: JLPT_COLORS[deck.jlpt_level] }}>
+    <div
+      className={`deck-card${isJlpt ? ' jlpt-deck' : ''}`}
+      style={{ borderColor: JLPT_COLORS[deck.jlpt_level] }}
+    >
       <div className="deck-card-top">
-        <span className="deck-badge" style={{ background: JLPT_COLORS[deck.jlpt_level] }}>
-          {deck.jlpt_level}
-        </span>
-        <button className="btn-icon-danger" onClick={handleDelete} title="ลบ deck">✕</button>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+          <span className="deck-badge" style={{ background: JLPT_COLORS[deck.jlpt_level] }}>
+            {deck.jlpt_level}
+          </span>
+          {isJlpt && <span className="badge-jlpt">JLPT</span>}
+        </div>
+        {!isJlpt && (
+          <button className="btn-icon-danger" onClick={handleDelete} title="ลบ deck">✕</button>
+        )}
       </div>
 
       <h3 className="deck-name">{deck.name}</h3>
@@ -31,7 +40,7 @@ export default function DeckCard({ deck, onDelete }) {
       <div className="deck-card-actions">
         <button
           className="btn-secondary"
-          onClick={() => navigate(`/decks/${deck.id}/vocab`)}
+          onClick={() => navigate(`/decks/${deck.id}/vocab?level=${deck.jlpt_level}`)}
         >
           คำศัพท์
         </button>

@@ -2,7 +2,7 @@
 // IMPORTS
 // ============================================================
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getVocabByDeck, addVocabCard, deleteVocabCard } from '../services/vocabService';
 import VocabCard from '../components/Vocabulary/VocabCard';
 import AddVocabModal from '../components/Vocabulary/AddVocabModal';
@@ -12,6 +12,8 @@ import AddVocabModal from '../components/Vocabulary/AddVocabModal';
 // ============================================================
 export default function VocabPage() {
   const { deckId } = useParams();
+  const [searchParams] = useSearchParams();
+  const deckLevel = searchParams.get('level'); // เช่น "N5"
   const navigate = useNavigate();
 
   // --- STATE ---

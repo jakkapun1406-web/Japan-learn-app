@@ -29,35 +29,56 @@ japanese-app/
 │       ├── assets/            # Static images (hero.png, etc.)
 │       ├── components/
 │       │   ├── Auth/          # Login / register UI
-│       │   ├── Deck/          # Deck management UI
+│       │   ├── Deck/          # DeckCard.jsx — deck display + actions
 │       │   ├── Flashcard/     # Flashcard review UI
 │       │   ├── Layout/        # Shared layout wrappers
-│       │   └── Vocabulary/    # Vocabulary list / detail UI
+│       │   └── Vocabulary/    # VocabCard, AddVocabModal
 │       ├── constants/
-│       │   └── jlptLevels.js  # N5–N1 level definitions
+│       │   └── jlptLevels.js  # N5–N1 level definitions + JLPT_COLORS
 │       ├── hooks/
 │       │   └── useAuth.js     # Supabase session hook
 │       ├── lib/
 │       │   └── supabaseClient.js  # Supabase browser client
 │       ├── pages/
-│       │   ├── DashboardPage.jsx
+│       │   ├── DashboardPage.jsx  # JLPT + user deck sections
+│       │   ├── VocabPage.jsx      # Vocab list for a deck
+│       │   ├── ReviewPage.jsx     # SRS flashcard review
 │       │   ├── LoginPage.jsx
 │       │   └── RegisterPage.jsx
-│       ├── services/          # API call helpers (axios)
+│       ├── services/
+│       │   ├── apiClient.js       # Axios instance
+│       │   ├── deckService.js     # getDecks, createDeck, deleteDeck, initJlptDecks
+│       │   └── vocabService.js    # getVocabByDeck, addVocabCard, deleteVocabCard
 │       ├── utils/
-│       │   └── srsAlgorithm.js  # SM-2 / SRS scheduling logic
+│       │   └── srsAlgorithm.js    # SM-2 / SRS scheduling logic
 │       ├── App.jsx
 │       └── main.jsx
 │
 ├── server/                    # Express API backend
 │   ├── controllers/
-│   │   └── auth.controller.js
+│   │   ├── auth.controller.js
+│   │   ├── deck.controller.js
+│   │   ├── vocab.controller.js
+│   │   ├── review.controller.js
+│   │   ├── jlptVocab.controller.js
+│   │   └── jlptDeck.controller.js   # initJlptDecks — auto-create N5–N1 decks
 │   ├── lib/
 │   │   └── supabaseClient.js  # Supabase server-side client
 │   ├── middleware/
 │   │   └── auth.middleware.js # JWT / session verification
 │   ├── routes/
-│   │   └── auth.routes.js
+│   │   ├── auth.routes.js
+│   │   ├── deck.routes.js
+│   │   ├── vocab.routes.js
+│   │   ├── review.routes.js
+│   │   ├── jlptVocab.routes.js
+│   │   └── jlptDeck.routes.js       # POST /api/jlpt-decks/init
+│   ├── scripts/
+│   │   ├── 001_create_jlpt_vocab.sql    # Creates jlpt_vocab table
+│   │   ├── 002_vocab_cards_unique_word.sql  # Unique(word, deck_id) constraint
+│   │   ├── 003_add_deck_type.sql        # Adds deck_type col to user_decks
+│   │   ├── seedJlptVocab.js             # Old seed (150 words, deprecated)
+│   │   └── seedJlptVocabFull.js         # Full seed via JMdict → Claude Haiku → Thai
 │   └── index.js               # Entry point — port 3001
 │
 ├── references/
@@ -119,20 +140,22 @@ VITE_API_URL=http://localhost:3001
 
 ## API Routes
 
-| Method | Path                           | Auth | Description                        |
-|--------|--------------------------------|------|------------------------------------|
-| GET    | `/api/health`                  | No   | Server health check                |
-| POST   | `/api/auth/register`           | No   | สมัครสมาชิก                        |
-| POST   | `/api/auth/login`              | No   | เข้าสู่ระบบ                        |
-| POST   | `/api/auth/logout`             | No   | ออกจากระบบ                         |
-| GET    | `/api/decks`                   | Yes  | ดึง deck ทั้งหมด (filter by level) |
-| POST   | `/api/decks`                   | Yes  | สร้าง deck ใหม่                    |
-| DELETE | `/api/decks/:id`               | Yes  | ลบ deck                            |
-| GET    | `/api/decks/:deckId/vocab`     | Yes  | ดึงคำศัพท์ใน deck                  |
-| POST   | `/api/decks/:deckId/vocab`     | Yes  | เพิ่มคำศัพท์ใน deck                |
-| DELETE | `/api/decks/:deckId/vocab/:cardId` | Yes | ลบคำศัพท์                      |
-| GET    | `/api/decks/:deckId/review`    | Yes  | ดึงการ์ดที่ถึงเวลา review          |
-| POST   | `/api/decks/:deckId/review`    | Yes  | ส่งผล review (grade 0–3)           |
+| Method | Path                              | Auth | Description                        |
+|--------|-----------------------------------|------|------------------------------------|
+| GET    | `/api/health`                     | No   | Server health check                |
+| POST   | `/api/auth/register`              | No   | สมัครสมาชิก                        |
+| POST   | `/api/auth/login`                 | No   | เข้าสู่ระบบ                        |
+| POST   | `/api/auth/logout`                | No   | ออกจากระบบ                         |
+| GET    | `/api/decks`                      | Yes  | ดึง deck ทั้งหมด (incl. deck_type) |
+| POST   | `/api/decks`                      | Yes  | สร้าง user deck (deck_type='user') |
+| DELETE | `/api/decks/:id`                  | Yes  | ลบ deck                            |
+| GET    | `/api/decks/:deckId/vocab`        | Yes  | ดึงคำศัพท์ใน deck                  |
+| POST   | `/api/decks/:deckId/vocab`        | Yes  | เพิ่มคำศัพท์ใน deck                |
+| DELETE | `/api/decks/:deckId/vocab/:cardId`| Yes  | ลบคำศัพท์                         |
+| GET    | `/api/decks/:deckId/review`       | Yes  | ดึงการ์ดที่ถึงเวลา review          |
+| POST   | `/api/decks/:deckId/review`       | Yes  | ส่งผล review (grade 0–3)           |
+| POST   | `/api/jlpt-decks/init`            | Yes  | Auto-create JLPT N5–N1 decks       |
+| GET    | `/api/jlpt-vocab`                 | Yes  | ดึง vocab จากคลัง jlpt_vocab       |
 
 CORS is whitelisted to `http://localhost:5173` only.
 
@@ -140,19 +163,22 @@ CORS is whitelisted to `http://localhost:5173` only.
 
 ## Current Implementation Status
 
-| Feature               | Status       |
-|-----------------------|--------------|
-| Auth (login/register) | Implemented  |
-| SRS algorithm         | Implemented  |
-| JLPT level constants  | Implemented  |
-| Flashcard review UI   | In progress  |
-| Deck management       | In progress  |
-| Vocabulary list       | In progress  |
-| Grammar lessons       | Planned      |
-| Kana / Kanji reading  | Planned      |
-| Listening / Speaking  | Planned      |
-| Quiz after lesson     | Planned      |
-| AI-assisted features  | Planned      |
+| Feature                         | Status       |
+|---------------------------------|--------------|
+| Auth (login/register)           | Done         |
+| SRS algorithm (SM-2)            | Done         |
+| JLPT level constants + colors   | Done         |
+| Deck management (CRUD)          | Done         |
+| JLPT decks (deck_type='jlpt')   | Done         |
+| JLPT deck auto-init on login    | Done         |
+| Vocabulary list (VocabPage)     | Done         |
+| Flashcard review UI             | Done         |
+| JLPT vocab seed (full JMdict)   | In progress — seed script needs fixing (broken URL) |
+| Grammar lessons                 | Planned      |
+| Kana / Kanji reading            | Planned      |
+| Listening / Speaking            | Planned      |
+| Quiz after lesson               | Planned      |
+| AI-assisted features            | Planned      |
 
 ---
 
@@ -228,14 +254,15 @@ Do not mix module systems between client and server.
 | axios                 | HTTP requests to backend       |
 
 ### Server
-| Package               | Purpose                        |
-|-----------------------|--------------------------------|
-| express v5            | HTTP server / routing          |
-| @supabase/supabase-js | Supabase server-side client    |
-| @anthropic-ai/sdk     | Claude AI integration          |
-| cors                  | CORS middleware                |
-| dotenv                | Load `.env` variables          |
-| nodemon               | Dev auto-restart               |
+| Package               | Purpose                                  |
+|-----------------------|------------------------------------------|
+| express v5            | HTTP server / routing                    |
+| @supabase/supabase-js | Supabase server-side client              |
+| @anthropic-ai/sdk     | Claude AI integration (Haiku for seed)   |
+| cors                  | CORS middleware                          |
+| dotenv                | Load `.env` variables                    |
+| nodemon               | Dev auto-restart                         |
+| adm-zip               | Unzip JMdict release zip (seed script)   |
 
 ---
 
@@ -249,25 +276,34 @@ Do not mix module systems between client and server.
 
 ## Current Progress
 
-- [x] Project setup complete (React + Vite + Node.js + Supabase)
-- [x] Login page UI done (purple gradient background)
-- [x] Supabase tables created: vocab_cards, decks
-- [x] N5 vocabulary data inserted (8 words)
-- [ ] Fix login page background fullscreen issue (in progress)
-- [ ] Create API endpoint GET /api/vocab-cards
-- [ ] Create Flashcard component
+- [x] Project setup (React + Vite + Node.js + Supabase)
+- [x] Auth (login / register / logout)
+- [x] Supabase tables: `user_decks`, `vocab_cards`, `jlpt_vocab`, `review_logs`
+- [x] SQL migrations: 001 (jlpt_vocab), 002 (unique word+deck), 003 (deck_type col)
+- [x] Deck management: getDecks, createDeck, deleteDeck
+- [x] JLPT deck separation: `deck_type` column, `initJlptDecks` endpoint
+- [x] Dashboard: JLPT Decks section + ห้องเรียนของฉัน section (auto-init)
+- [x] DeckCard: `isJlpt` prop, JLPT badge, no delete button for JLPT decks
+- [x] VocabPage: view + add vocab (works for both deck types)
+- [x] Flashcard review UI (ReviewPage + SRS)
+- [ ] **SEED SCRIPT BROKEN** — `seedJlptVocabFull.js` uses a dead URL (HTTP 404)
+      Fix: switch to jmdict-simplified zip + adm-zip parser
 
 ---
 
 ## Last Working On
 
-- Fixing `.auth-page` background not filling full screen
-- File: `client/src/App.css` (`.auth-page` styles) and `client/src/index.css` (`#root` reset)
+Rewriting `server/scripts/seedJlptVocabFull.js` to use the correct JMdict data source:
+- **Broken URL**: `https://raw.githubusercontent.com/jbrooksuk/JLPT-Vocabulary/master/jlpt_n5.json` (404)
+- **Working URL**: `https://github.com/scriptin/jmdict-simplified/releases/download/3.6.2%2B20260420131912/jmdict-eng-common-3.6.2%2B20260420131912.json.zip`
+- Format: `words[]` each with `kanji[].tags` or `kana[].tags` containing `"jlpt-n5"` etc.
+- Requires `adm-zip` npm package in server/
 
 ---
 
 ## Next Steps
 
-1. Confirm background fix works
-2. Create vocab API endpoint in `server/`
-3. Build Flashcard UI in `client/`
+1. **Fix seed script**: install `adm-zip`, rewrite `seedJlptVocabFull.js` to use jmdict-simplified
+2. Run migrations 001–003 in Supabase SQL Editor (if not already done)
+3. Run `node scripts/seedJlptVocabFull.js n5` to test, then full seed
+4. Test full flow: login → Dashboard shows JLPT N5–N1 decks automatically
