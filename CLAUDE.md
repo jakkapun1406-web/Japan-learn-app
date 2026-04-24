@@ -244,3 +244,30 @@ Do not mix module systems between client and server.
 - `references/known-issues.md` — all logged bugs and their fixes. Read before debugging.
 - `.env.example` — template for environment variables.
 - Supabase dashboard — database schema, auth settings, RLS policies.
+
+---
+
+## Current Progress
+
+- [x] Project setup complete (React + Vite + Node.js + Supabase)
+- [x] Login page UI done (purple gradient background)
+- [x] Supabase tables created: vocab_cards, decks
+- [x] N5 vocabulary data inserted (8 words)
+- [ ] Fix login page background fullscreen issue (in progress)
+- [ ] Create API endpoint GET /api/vocab-cards
+- [ ] Create Flashcard component
+
+---
+
+## Last Working On
+
+- Fixing `.auth-page` background not filling full screen
+- File: `client/src/App.css` (`.auth-page` styles) and `client/src/index.css` (`#root` reset)
+
+---
+
+## Next Steps
+
+1. Confirm background fix works
+2. Create vocab API endpoint in `server/`
+3. Build Flashcard UI in `client/`

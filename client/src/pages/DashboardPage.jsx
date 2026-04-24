@@ -65,7 +65,7 @@ export default function DashboardPage() {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h1>🇯🇵 Japanese App</h1>
+        <h1>Japanese App</h1>
         <div className="header-actions">
           <span>สวัสดี, {user?.user_metadata?.display_name || user?.email}</span>
           <button onClick={handleLogout} className="btn-secondary">ออกจากระบบ</button>
