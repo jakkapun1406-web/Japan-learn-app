@@ -289,8 +289,10 @@ Do not mix module systems between client and server.
 - [x] Seed script fixed — uses `jlpt-vocab-api.vercel.app` (8,385 words total)
 - [x] N5 seeded: 662 entries in `jlpt_vocab` ✓
 - [x] N4 seeded: 632 entries in `jlpt_vocab` ✓
-- [ ] N3/N2/N1 seed — in progress (running background)
-- [ ] Run SQL migration 003 in Supabase SQL Editor (if not yet done)
+- [x] N3 seeded: 1,797 entries in `jlpt_vocab` ✓
+- [x] N2 seeded: 1,831 entries in `jlpt_vocab` ✓
+- [x] N1 seeded: 3,463 entries in `jlpt_vocab` ✓ (8,385 total)
+- [x] Migration 003 run in Supabase SQL Editor ✓
 - [ ] End-to-end test: login → Dashboard → JLPT decks auto-created → review works
 
 ---
@@ -307,14 +309,12 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- Fixed `server/scripts/seedJlptVocabFull.js` — now uses JLPT Vocab API with Claude Haiku translation
-- Seeding N3/N2/N1 into `jlpt_vocab` table (background process)
+- All 5 JLPT levels seeded into `jlpt_vocab`: N5 (662), N4 (632), N3 (1,797), N2 (1,831), N1 (3,463) — 8,385 total
+- Migration 003 (`deck_type` column) run in Supabase SQL Editor
 
 ---
 
 ## Next Steps
 
-1. Confirm N3/N2/N1 seed completed (check Supabase `jlpt_vocab` row count)
-2. Run migration `003_add_deck_type.sql` in Supabase SQL Editor (if not done)
-3. Test full flow: login → Dashboard shows JLPT N5–N1 automatically
-4. Verify review session works per deck (JLPT and user decks separate)
+1. End-to-end test: login → Dashboard → JLPT N5–N1 auto-created → review works
+2. Plan next feature (Grammar lessons / Kana reading / AI hints)
