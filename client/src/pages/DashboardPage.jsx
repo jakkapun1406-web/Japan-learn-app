@@ -88,6 +88,9 @@ export default function DashboardPage() {
           <button onClick={() => navigate('/reading')} className="btn-secondary">
             การอ่าน
           </button>
+          <button onClick={() => navigate('/speaking')} className="btn-secondary">
+            การพูด
+          </button>
           <button onClick={handleLogout} className="btn-secondary">ออกจากระบบ</button>
         </div>
       </header>

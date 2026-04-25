@@ -993,6 +993,24 @@ body {
 }
 
 /* ============================================================
+   SPEAKING PRACTICE
+   ============================================================ */
+.speaking-word-display { font-size: 3rem; font-weight: 700; text-align: center; margin: 1.5rem 0 0.5rem; }
+.speaking-reading-hint { font-size: 1.1rem; color: #888; text-align: center; margin-bottom: 0.25rem; min-height: 1.6rem; }
+.speaking-hint-toggle { font-size: 0.82rem; color: #667eea; cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; margin-bottom: 0.25rem; }
+.speaking-mic-btn { width: 80px; height: 80px; border-radius: 50%; border: none; font-size: 2rem; cursor: pointer; background: #667eea; color: #fff; display: flex; align-items: center; justify-content: center; margin: 1.5rem auto 0.25rem; transition: background 0.2s; }
+.speaking-mic-btn.listening { background: #e53935; }
+.speaking-mic-btn:disabled { background: #ccc; cursor: not-allowed; }
+.speaking-transcript { font-size: 1rem; color: #555; text-align: center; min-height: 1.5rem; margin-bottom: 0.25rem; font-style: italic; }
+.speaking-result { font-size: 1.1rem; text-align: center; font-weight: 600; padding: 0.5rem 1rem; border-radius: 6px; margin: 0.5rem auto; max-width: 400px; }
+.speaking-result.correct { color: #2e7d32; background: #e8f5e9; }
+.speaking-result.wrong { color: #c62828; background: #ffebee; }
+.speaking-word-count-group { display: flex; gap: 0.5rem; justify-content: center; margin: 1rem 0; }
+.speaking-word-count-btn { padding: 0.4rem 1.2rem; border-radius: 20px; border: 2px solid #667eea; background: #fff; color: #667eea; cursor: pointer; font-weight: 600; transition: background 0.15s; }
+.speaking-word-count-btn.active { background: #667eea; color: #fff; }
+.speaking-unsupported { background: #fff8e1; border: 1px solid #ffcc02; border-radius: 8px; padding: 0.8rem 1rem; color: #795548; font-size: 0.9rem; margin-bottom: 1rem; }
+
+/* ============================================================
    MOBILE RESPONSIVE
    ============================================================ */
 @media (max-width: 600px) {
