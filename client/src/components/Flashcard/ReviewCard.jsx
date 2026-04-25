@@ -3,6 +3,7 @@
 // ============================================================
 import { useState } from 'react';
 import { GRADE_LABELS } from '../../utils/srsAlgorithm';
+import { useTextToSpeech } from '../../hooks/useTextToSpeech';
 
 // ============================================================
 // REVIEW CARD — แสดงการ์ดและปุ่ม grade หลังพลิก
@@ -10,6 +11,7 @@ import { GRADE_LABELS } from '../../utils/srsAlgorithm';
 export default function ReviewCard({ card, onGrade }) {
   // --- STATE ---
   const [flipped, setFlipped] = useState(false);
+  const { speak } = useTextToSpeech();
 
   // --- HANDLERS ---
   const handleGrade = (grade) => {
@@ -28,12 +30,26 @@ export default function ReviewCard({ card, onGrade }) {
           // FRONT — word เท่านั้น
           <div className="review-face review-front">
             <p className="review-word">{card.word}</p>
+            <button
+              className="btn-tts"
+              onClick={(e) => { e.stopPropagation(); speak(card.word); }}
+              title="ฟังเสียง"
+            >
+              🔊
+            </button>
             <p className="review-hint">แตะเพื่อดูคำตอบ</p>
           </div>
         ) : (
           // BACK — reading + meaning + ชนิดคำ
           <div className="review-face review-back">
             <p className="review-word">{card.word}</p>
+            <button
+              className="btn-tts"
+              onClick={(e) => { e.stopPropagation(); speak(card.word); }}
+              title="ฟังเสียง"
+            >
+              🔊
+            </button>
             <p className="review-reading">{card.reading}</p>
             <p className="review-meaning">{card.meaning}</p>
             {card.part_of_speech && (

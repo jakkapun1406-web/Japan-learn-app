@@ -4,6 +4,7 @@
 import { useState, useCallback } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { JLPT_COLORS } from '../constants/jlptLevels';
 
 // ============================================================
@@ -47,6 +48,7 @@ export default function SpeakingSessionPage() {
   }, [word]);
 
   const { listening, start, stop } = useSpeechRecognition({ onResult: handleResult });
+  const { speak } = useTextToSpeech();
 
   // --- HANDLERS ---
   const handleNext = () => {
@@ -152,6 +154,13 @@ export default function SpeakingSessionPage() {
             >
               {showHint ? 'ซ่อนการอ่าน' : 'แสดงการอ่าน'}
             </button>
+
+            {/* ---- LISTEN BUTTON ---- */}
+            <div style={{ marginTop: '0.5rem' }}>
+              <button className="btn-tts btn-tts-lg" onClick={() => speak(word.word)} title="ฟังเสียงตัวอย่าง">
+                🔊 ฟังเสียงตัวอย่าง
+              </button>
+            </div>
 
             {/* ---- MIC BUTTON ---- */}
             {result === null && (

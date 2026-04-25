@@ -1010,6 +1010,12 @@ body {
 .speaking-word-count-btn.active { background: #667eea; color: #fff; }
 .speaking-unsupported { background: #fff8e1; border: 1px solid #ffcc02; border-radius: 8px; padding: 0.8rem 1rem; color: #795548; font-size: 0.9rem; margin-bottom: 1rem; }
 
+/* ---- TTS BUTTON ---- */
+.btn-tts { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0.1rem 0.25rem; border-radius: 4px; opacity: 0.6; transition: opacity 0.15s; line-height: 1; }
+.btn-tts:hover { opacity: 1; }
+.btn-tts-sm { font-size: 0.75rem; }
+.btn-tts-lg { font-size: 0.9rem; background: #f0f0f0; border: 1px solid #ddd; border-radius: 20px; padding: 0.35rem 0.9rem; opacity: 1; color: #444; }
+
 /* ============================================================
    MOBILE RESPONSIVE
    ============================================================ */

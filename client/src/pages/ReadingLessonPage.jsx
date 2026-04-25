@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLessonById } from '../services/readingService';
 import { JLPT_COLORS } from '../constants/jlptLevels';
+import { useTextToSpeech } from '../hooks/useTextToSpeech';
 
 // ============================================================
 // CONSTANTS — accent colors per lesson type
@@ -152,6 +153,8 @@ export default function ReadingLessonPage() {
       ? JLPT_COLORS[lesson.jlpt_level] || '#667eea'
       : TYPE_COLORS[lesson.lesson_type] || '#667eea';
 
+  const { speak } = useTextToSpeech();
+
   const badgeLabel =
     lesson.lesson_type === 'kanji'
       ? `${TYPE_LABELS.kanji} (${lesson.jlpt_level})`
@@ -205,6 +208,7 @@ export default function ReadingLessonPage() {
                     >
                       {ch.char}
                     </div>
+                    <button className="btn-tts" onClick={() => speak(ch.char)} title="ฟังเสียง">🔊</button>
                     <div className="reading-char-romaji">{ch.romaji}</div>
                     {ch.stroke_order_hint && (
                       <div className="reading-char-hint">{ch.stroke_order_hint}</div>
@@ -214,6 +218,7 @@ export default function ReadingLessonPage() {
                         {ch.examples.map((ex, j) => (
                           <div key={j}>
                             <span style={{ fontWeight: 600 }}>{ex.word}</span>
+                            <button className="btn-tts btn-tts-sm" onClick={() => speak(ex.word)} title="ฟังเสียง">🔊</button>
                             {ex.reading && <span style={{ color: '#888' }}> ({ex.reading})</span>}
                             <br />
                             <span style={{ color: '#666' }}>{ex.meaning_thai}</span>

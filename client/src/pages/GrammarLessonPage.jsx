@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLessonById } from '../services/grammarService';
 import { JLPT_COLORS } from '../constants/jlptLevels';
+import { useTextToSpeech } from '../hooks/useTextToSpeech';
 
 // ============================================================
 // GRAMMAR LESSON PAGE — lesson detail + mini-quiz
@@ -134,6 +135,7 @@ export default function GrammarLessonPage() {
   if (!lesson) return null;
 
   const accentColor = JLPT_COLORS[lesson.jlpt_level] || '#667eea';
+  const { speak } = useTextToSpeech();
 
   return (
     <div className="dashboard">
@@ -177,7 +179,10 @@ export default function GrammarLessonPage() {
               <div className="examples-list">
                 {lesson.examples.map((ex, i) => (
                   <div key={i} className="example-row">
-                    <p className="example-japanese">{ex.japanese}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <p className="example-japanese" style={{ margin: 0 }}>{ex.japanese}</p>
+                      <button className="btn-tts" onClick={() => speak(ex.japanese)} title="ฟังเสียง">🔊</button>
+                    </div>
                     <p className="example-reading">{ex.reading}</p>
                     <p className="example-thai">{ex.thai}</p>
                   </div>
