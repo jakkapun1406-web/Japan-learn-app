@@ -43,12 +43,15 @@ japanese-app/
 │       │   ├── DashboardPage.jsx  # JLPT + user deck sections
 │       │   ├── VocabPage.jsx      # Vocab list for a deck
 │       │   ├── ReviewPage.jsx     # SRS flashcard review
+│       │   ├── GrammarPage.jsx    # Lesson browser — tabs N5–N1 + lesson cards
+│       │   ├── GrammarLessonPage.jsx  # Lesson detail + examples + mini-quiz
 │       │   ├── LoginPage.jsx
 │       │   └── RegisterPage.jsx
 │       ├── services/
 │       │   ├── apiClient.js       # Axios instance
 │       │   ├── deckService.js     # getDecks, createDeck, deleteDeck, initJlptDecks
-│       │   └── vocabService.js    # getVocabByDeck, addVocabCard, deleteVocabCard
+│       │   ├── vocabService.js    # getVocabByDeck, addVocabCard, deleteVocabCard
+│       │   └── grammarService.js  # getLessons, getLessonById
 │       ├── utils/
 │       │   └── srsAlgorithm.js    # SM-2 / SRS scheduling logic
 │       ├── App.jsx
@@ -66,19 +69,24 @@ japanese-app/
 │   │   └── supabaseClient.js  # Supabase server-side client
 │   ├── middleware/
 │   │   └── auth.middleware.js # JWT / session verification
+│   ├── controllers/
+│   │   └── grammar.controller.js    # getLessons, getLessonById
 │   ├── routes/
 │   │   ├── auth.routes.js
 │   │   ├── deck.routes.js
 │   │   ├── vocab.routes.js
 │   │   ├── review.routes.js
 │   │   ├── jlptVocab.routes.js
-│   │   └── jlptDeck.routes.js       # POST /api/jlpt-decks/init
+│   │   ├── jlptDeck.routes.js       # POST /api/jlpt-decks/init
+│   │   └── grammar.routes.js        # GET /api/grammar/:level, /api/grammar/lesson/:id
 │   ├── scripts/
 │   │   ├── 001_create_jlpt_vocab.sql    # Creates jlpt_vocab table
 │   │   ├── 002_vocab_cards_unique_word.sql  # Unique(word, deck_id) constraint
 │   │   ├── 003_add_deck_type.sql        # Adds deck_type col to user_decks
+│   │   ├── 004_grammar_lessons.sql      # Creates grammar_lessons table (run in Supabase)
 │   │   ├── seedJlptVocab.js             # Old seed (150 words, deprecated)
-│   │   └── seedJlptVocabFull.js         # Full seed via JMdict → Claude Haiku → Thai
+│   │   ├── seedJlptVocabFull.js         # Full seed via JMdict → Claude Haiku → Thai
+│   │   └── seedGrammarLessons.js        # AI seed: 5 lessons × 5 levels via Claude Haiku
 │   └── index.js               # Entry point — port 3001
 │
 ├── references/
@@ -156,6 +164,8 @@ VITE_API_URL=http://localhost:3001
 | POST   | `/api/decks/:deckId/review`       | Yes  | ส่งผล review (grade 0–3)           |
 | POST   | `/api/jlpt-decks/init`            | Yes  | Auto-create JLPT N5–N1 decks       |
 | GET    | `/api/jlpt-vocab`                 | Yes  | ดึง vocab จากคลัง jlpt_vocab       |
+| GET    | `/api/grammar/:level`             | Yes  | ดึงรายการบทเรียน (N5–N1)           |
+| GET    | `/api/grammar/lesson/:id`         | Yes  | ดึงบทเรียน + examples + quiz       |
 
 CORS is whitelisted to `http://localhost:5173` only.
 
@@ -173,11 +183,12 @@ CORS is whitelisted to `http://localhost:5173` only.
 | JLPT deck auto-init on login    | Done         |
 | Vocabulary list (VocabPage)     | Done         |
 | Flashcard review UI             | Done         |
-| JLPT vocab seed (full JMdict)   | In progress — seed script needs fixing (broken URL) |
-| Grammar lessons                 | Planned      |
+| JLPT vocab seed (full JMdict)   | Done — 8,385 words across N5–N1 in `jlpt_vocab`    |
+| Grammar lessons (module)        | Done — DB, API, UI, mini-quiz ✓                     |
+| Grammar lessons (N5 seed)       | Done — 5 lessons seeded via Claude Haiku ✓          |
+| Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete    |
 | Kana / Kanji reading            | Planned      |
 | Listening / Speaking            | Planned      |
-| Quiz after lesson               | Planned      |
 | AI-assisted features            | Planned      |
 
 ---
@@ -293,7 +304,11 @@ Do not mix module systems between client and server.
 - [x] N2 seeded: 1,831 entries in `jlpt_vocab` ✓
 - [x] N1 seeded: 3,463 entries in `jlpt_vocab` ✓ (8,385 total)
 - [x] Migration 003 run in Supabase SQL Editor ✓
-- [ ] End-to-end test: login → Dashboard → JLPT decks auto-created → review works
+- [x] Migration 004 run in Supabase SQL Editor ✓ (`grammar_lessons` table)
+- [x] Grammar Lessons module — DB, API, frontend (GrammarPage + GrammarLessonPage + mini-quiz) ✓
+- [x] N5 grammar lessons seeded — 5 lessons in DB ✓
+- [ ] N4–N1 grammar lessons seeded — pending Anthropic API credits
+- [ ] End-to-end test: login → Dashboard → ไวยากรณ์ → lessons → quiz works
 
 ---
 
@@ -309,12 +324,17 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- All 5 JLPT levels seeded into `jlpt_vocab`: N5 (662), N4 (632), N3 (1,797), N2 (1,831), N1 (3,463) — 8,385 total
-- Migration 003 (`deck_type` column) run in Supabase SQL Editor
+- Phase 7 — Grammar Lessons Module fully implemented
+  - Migration 004 (`grammar_lessons` table with RLS + index) run in Supabase
+  - Fixed UNIQUE constraint bug: added `UNIQUE (jlpt_level, title)` for upsert ON CONFLICT
+  - Seeded N5 grammar lessons (5 lessons) via `node scripts/seedGrammarLessons.js n5`
+  - N4–N1 seed failed — Anthropic API credits exhausted
 
 ---
 
 ## Next Steps
 
-1. End-to-end test: login → Dashboard → JLPT N5–N1 auto-created → review works
-2. Plan next feature (Grammar lessons / Kana reading / AI hints)
+1. Top up Anthropic API credits at console.anthropic.com/billing
+2. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
+3. End-to-end test: login → Dashboard → click ไวยากรณ์ → N5 lessons render → mini-quiz works
+4. Plan next feature (Kana/Kanji reading practice or AI hints)

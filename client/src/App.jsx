@@ -9,6 +9,8 @@ import DashboardPage from './pages/DashboardPage';
 import DeckPage from './pages/DeckPage';
 import VocabPage from './pages/VocabPage';
 import ReviewPage from './pages/ReviewPage';
+import GrammarPage from './pages/GrammarPage';
+import GrammarLessonPage from './pages/GrammarLessonPage';
 import './App.css';
 
 // ============================================================
@@ -49,6 +51,14 @@ export default function App() {
         <Route
           path="/decks/:deckId/review"
           element={<ProtectedRoute><ReviewPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/grammar"
+          element={<ProtectedRoute><GrammarPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/grammar/:lessonId"
+          element={<ProtectedRoute><GrammarLessonPage /></ProtectedRoute>}
         />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
