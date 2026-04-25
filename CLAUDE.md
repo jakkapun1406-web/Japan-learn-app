@@ -278,10 +278,40 @@ Do not mix module systems between client and server.
 
 ---
 
+## Deployment
+
+| Layer    | Platform  | Config file              | Notes |
+|----------|-----------|--------------------------|-------|
+| Frontend | Vercel    | `client/vercel.json`     | SPA rewrite rule; auto-detects Vite |
+| Backend  | Render    | `server/render.yaml`     | Node web service; `npm start` |
+| Database | Supabase  | —                        | Already running |
+
+### Deploy Steps (first time)
+1. Push repo to GitHub.
+2. **Render** — New Web Service → connect repo → set root to `server/` → add env vars.
+3. **Vercel** — New Project → connect repo → set root to `client/` → add env vars.
+4. Copy the Render URL into Vercel's `VITE_API_URL`.
+5. Copy the Vercel URL into Render's `FRONTEND_URL`.
+
+### Environment Variables
+**Vercel (client):**
+- `VITE_SUPABASE_URL` — Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` — Supabase anon key
+- `VITE_API_URL` — Render backend URL
+
+**Render (server):**
+- `SUPABASE_URL` — Supabase project URL
+- `SUPABASE_ANON_KEY` — Supabase anon key
+- `SUPABASE_SERVICE_ROLE_KEY` — Supabase service role key
+- `ANTHROPIC_API_KEY` — Anthropic API key
+- `FRONTEND_URL` — Vercel frontend URL (for CORS)
+
+---
+
 ## References
 
 - `references/known-issues.md` — all logged bugs and their fixes. Read before debugging.
-- `.env.example` — template for environment variables.
+- `.env.example` — template for environment variables (includes `FRONTEND_URL`).
 - Supabase dashboard — database schema, auth settings, RLS policies.
 
 ---
@@ -313,6 +343,7 @@ Do not mix module systems between client and server.
 - [x] Phase 8 — Reading Module: hiragana/katakana/kanji lessons + mini-quiz ✓
 - [x] Phase 9 — Speaking Practice: SpeakingPage + SpeakingSessionPage + useSpeechRecognition + TTS ✓
 - [x] Phase 9 bug fixes: NFKC normalize, stale-closure fix (useRef), kanji/reading dual match, show heard text ✓
+- [x] Deployment prep — `client/vercel.json` + `server/render.yaml` + CORS FRONTEND_URL ✓
 
 ---
 
@@ -343,8 +374,8 @@ Do not mix module systems between client and server.
 
 ## Next Steps
 
-1. Top up Anthropic API credits at console.anthropic.com/billing
-2. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
-3. End-to-end test: login → Dashboard → click ไวยากรณ์ → N5 lessons render → mini-quiz works
-4. Plan next feature — AI-powered hints / explanations via Claude
-4. Plan next feature (Kana/Kanji reading practice or AI hints)
+1. **Deploy** — push to GitHub, create Render service (root: `server/`), create Vercel project (root: `client/`), set all env vars, cross-link URLs.
+2. Top up Anthropic API credits at console.anthropic.com/billing
+3. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
+4. End-to-end test: login → Dashboard → click ไวยากรณ์ → N5 lessons render → mini-quiz works
+5. Plan next feature — AI-powered hints / explanations via Claude
