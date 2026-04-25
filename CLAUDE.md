@@ -14,6 +14,7 @@ A full-stack Japanese language learning app with spaced-repetition flashcards, g
 | Backend  | Node.js + Express 5 (`server/`)         |
 | Database | Supabase (PostgreSQL + Auth)            |
 | AI       | Anthropic Claude SDK (`@anthropic-ai/sdk`) |
+| Hosting  | Vercel (frontend) + Render (backend)    |
 
 ---
 
@@ -25,33 +26,42 @@ japanese-app/
 │   ├── public/
 │   │   ├── favicon.svg
 │   │   └── icons.svg
+│   ├── vercel.json            # Vercel deploy config (SPA rewrite rule)
 │   └── src/
 │       ├── assets/            # Static images (hero.png, etc.)
 │       ├── components/
-│       │   ├── Auth/          # Login / register UI
-│       │   ├── Deck/          # DeckCard.jsx — deck display + actions
-│       │   ├── Flashcard/     # Flashcard review UI
-│       │   ├── Layout/        # Shared layout wrappers
-│       │   └── Vocabulary/    # VocabCard, AddVocabModal
+│       │   ├── Deck/          # DeckCard.jsx, CreateDeckModal.jsx
+│       │   ├── Flashcard/     # ReviewCard.jsx, ReviewResult.jsx
+│       │   └── Vocabulary/    # VocabCard.jsx, AddVocabModal.jsx
 │       ├── constants/
 │       │   └── jlptLevels.js  # N5–N1 level definitions + JLPT_COLORS
 │       ├── hooks/
-│       │   └── useAuth.js     # Supabase session hook
+│       │   ├── useAuth.js             # Supabase session hook
+│       │   ├── useSpeechRecognition.js # Web Speech API, lang=ja-JP, maxAlternatives=3
+│       │   └── useTextToSpeech.js     # SpeechSynthesis TTS, ja-JP voice
 │       ├── lib/
 │       │   └── supabaseClient.js  # Supabase browser client
 │       ├── pages/
-│       │   ├── DashboardPage.jsx  # JLPT + user deck sections
-│       │   ├── VocabPage.jsx      # Vocab list for a deck
-│       │   ├── ReviewPage.jsx     # SRS flashcard review
-│       │   ├── GrammarPage.jsx    # Lesson browser — tabs N5–N1 + lesson cards
+│       │   ├── DashboardPage.jsx      # JLPT + user deck sections
+│       │   ├── DeckPage.jsx           # Deck detail view
+│       │   ├── VocabPage.jsx          # Vocab list for a deck
+│       │   ├── ReviewPage.jsx         # SRS flashcard review
+│       │   ├── GrammarPage.jsx        # Lesson browser — tabs N5–N1 + lesson cards
 │       │   ├── GrammarLessonPage.jsx  # Lesson detail + examples + mini-quiz
+│       │   ├── ReadingPage.jsx        # Kana/Kanji reading module — lesson selector
+│       │   ├── ReadingLessonPage.jsx  # Reading lesson + character quiz
+│       │   ├── SpeakingPage.jsx       # Speaking practice — level + word count setup
+│       │   ├── SpeakingSessionPage.jsx # Speaking session — mic + TTS + match result
 │       │   ├── LoginPage.jsx
 │       │   └── RegisterPage.jsx
 │       ├── services/
 │       │   ├── apiClient.js       # Axios instance
 │       │   ├── deckService.js     # getDecks, createDeck, deleteDeck, initJlptDecks
 │       │   ├── vocabService.js    # getVocabByDeck, addVocabCard, deleteVocabCard
-│       │   └── grammarService.js  # getLessons, getLessonById
+│       │   ├── reviewService.js   # getReviewCards, submitReview
+│       │   ├── grammarService.js  # getLessons, getLessonById
+│       │   ├── readingService.js  # getKanaLessons, getKanjiLessons, getLessonById
+│       │   └── speakingService.js # getWordsForLevel
 │       ├── utils/
 │       │   └── srsAlgorithm.js    # SM-2 / SRS scheduling logic
 │       ├── App.jsx
@@ -64,13 +74,14 @@ japanese-app/
 │   │   ├── vocab.controller.js
 │   │   ├── review.controller.js
 │   │   ├── jlptVocab.controller.js
-│   │   └── jlptDeck.controller.js   # initJlptDecks — auto-create N5–N1 decks
+│   │   ├── jlptDeck.controller.js   # initJlptDecks — auto-create N5–N1 decks
+│   │   ├── grammar.controller.js    # getLessons, getLessonById
+│   │   ├── reading.controller.js    # getKanaLessons, getKanjiLessons, getLessonById
+│   │   └── speaking.controller.js   # getWordsForLevel (shuffle + limit)
 │   ├── lib/
 │   │   └── supabaseClient.js  # Supabase server-side client
 │   ├── middleware/
 │   │   └── auth.middleware.js # JWT / session verification
-│   ├── controllers/
-│   │   └── grammar.controller.js    # getLessons, getLessonById
 │   ├── routes/
 │   │   ├── auth.routes.js
 │   │   ├── deck.routes.js
@@ -78,21 +89,26 @@ japanese-app/
 │   │   ├── review.routes.js
 │   │   ├── jlptVocab.routes.js
 │   │   ├── jlptDeck.routes.js       # POST /api/jlpt-decks/init
-│   │   └── grammar.routes.js        # GET /api/grammar/:level, /api/grammar/lesson/:id
+│   │   ├── grammar.routes.js        # GET /api/grammar/:level, /api/grammar/lesson/:id
+│   │   ├── reading.routes.js        # GET /api/reading/kana/:type, /kanji/:level, /lesson/:id
+│   │   └── speaking.routes.js       # GET /api/speaking/words/:level
 │   ├── scripts/
-│   │   ├── 001_create_jlpt_vocab.sql    # Creates jlpt_vocab table
+│   │   ├── 001_create_jlpt_vocab.sql       # Creates jlpt_vocab table
 │   │   ├── 002_vocab_cards_unique_word.sql  # Unique(word, deck_id) constraint
-│   │   ├── 003_add_deck_type.sql        # Adds deck_type col to user_decks
-│   │   ├── 004_grammar_lessons.sql      # Creates grammar_lessons table (run in Supabase)
-│   │   ├── seedJlptVocab.js             # Old seed (150 words, deprecated)
-│   │   ├── seedJlptVocabFull.js         # Full seed via JMdict → Claude Haiku → Thai
-│   │   └── seedGrammarLessons.js        # AI seed: 5 lessons × 5 levels via Claude Haiku
+│   │   ├── 003_add_deck_type.sql            # Adds deck_type col to user_decks
+│   │   ├── 004_grammar_lessons.sql          # Creates grammar_lessons table
+│   │   ├── 005_reading_lessons.sql          # Creates reading_lessons table
+│   │   ├── seedJlptVocab.js                 # Old seed (150 words, deprecated)
+│   │   ├── seedJlptVocabFull.js             # Full seed via JMdict → Claude Haiku
+│   │   ├── seedGrammarLessons.js            # AI seed: 5 lessons × 5 levels via Claude Haiku
+│   │   └── seedReadingLessons.js            # Seeds hiragana/katakana/kanji-N5 lessons
+│   ├── render.yaml            # Render deploy config (Node web service)
 │   └── index.js               # Entry point — port 3001
 │
 ├── references/
 │   └── known-issues.md        # Bug log — READ BEFORE DEBUGGING
 │
-├── .env.example               # Root env template (keys only)
+├── .env.example               # Root env template (keys only, incl. FRONTEND_URL)
 ├── .gitignore
 └── CLAUDE.md                  # This file
 ```
@@ -133,6 +149,7 @@ SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ANTHROPIC_API_KEY=
 PORT=3001
+FRONTEND_URL=http://localhost:5173
 ```
 
 ### `client/.env`
@@ -167,8 +184,11 @@ VITE_API_URL=http://localhost:3001
 | GET    | `/api/grammar/:level`             | Yes  | ดึงรายการบทเรียน (N5–N1)           |
 | GET    | `/api/grammar/lesson/:id`         | Yes  | ดึงบทเรียน + examples + quiz       |
 | GET    | `/api/speaking/words/:level`      | Yes  | ดึงคำศัพท์สำหรับฝึกพูด (shuffle + limit) |
+| GET    | `/api/reading/kana/:type`         | Yes  | ดึงบทเรียน hiragana หรือ katakana         |
+| GET    | `/api/reading/kanji/:level`       | Yes  | ดึงบทเรียนคันจิตาม JLPT level            |
+| GET    | `/api/reading/lesson/:id`         | Yes  | ดึงบทเรียน + quiz characters              |
 
-CORS is whitelisted to `http://localhost:5173` only.
+CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production).
 
 ---
 
@@ -196,12 +216,10 @@ CORS is whitelisted to `http://localhost:5173` only.
 
 ## Features Planned
 
-- Flashcard / SRS vocabulary (spaced-repetition scheduling)
-- Grammar lessons with structured exercises
-- Hiragana / Katakana / Kanji reading practice
-- Listening / Speaking practice
-- Quiz after each lesson
 - AI-powered hints and explanations via Anthropic Claude
+- Listening practice (audio comprehension)
+- User progress dashboard (streaks, review stats)
+- N4–N1 grammar lessons (pending Anthropic API credits)
 
 ---
 
@@ -359,16 +377,12 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- Phase 9 — Speaking Practice Module fully implemented + bug fixed
-  - Backend: `speaking.controller.js` + `speaking.routes.js` + registered in `server/index.js`
-  - Hook: `useSpeechRecognition.js` (Web Speech API, lang=ja-JP, maxAlternatives=3)
-  - Hook: `useTextToSpeech.js` (SpeechSynthesis, ja-JP voice, TTS buttons across all pages)
-  - Pages: `SpeakingPage.jsx` (level/count setup) + `SpeakingSessionPage.jsx` (practice session)
-  - Bug fixes applied to `SpeakingSessionPage.jsx`:
-    - Dual match: compares SpeechRecognition result against both `word.word` (kanji) AND `word.reading` (hiragana)
-    - NFKC normalize: strips spaces (incl. ideographic 　), punctuation (。、！？), then `.normalize('NFKC')`
-    - Stale closure fix: `useRef(word)` + `useEffect` so `handleResult` always reads current word even if re-rendered
-    - Show heard text: `heard` state displays "ระบบได้ยินว่า: ___" after recognition
+- Deployment prep — app is ready to deploy (configs committed, CORS updated)
+  - `client/vercel.json` — SPA rewrite rule for React Router on Vercel
+  - `server/render.yaml` — Render Node web service config with all env var keys
+  - `server/index.js` — CORS updated to allow `FRONTEND_URL` env var alongside localhost
+  - `.env.example` — updated with `FRONTEND_URL` key
+  - See **Deployment** section above for step-by-step deploy instructions
 
 ---
 
