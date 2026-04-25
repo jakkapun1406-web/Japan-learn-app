@@ -70,7 +70,7 @@ async function generateLesson(lessonType, jlptLevel, title) {
 
   const kanaCharNote = isKana
     ? `- characters: อักษรทุกตัวในแถวนี้ (${lessonType === 'hiragana' ? 'ฮิระงะนะ' : 'คาตะกะนะ'})`
-    : `- characters: คันจิที่สำคัญในหมวดนี้ 5-7 ตัว พร้อม on'yomi และ kun'yomi`;
+    : `- characters: คันจิที่สำคัญในหมวดนี้ 5 ตัว พร้อม on'yomi และ kun'yomi`;
 
   const charShape = isKana
     ? `{ "char": "อักษร", "romaji": "การถอดเสียง", "stroke_order_hint": "คำแนะนำสั้นๆ เช่น เริ่มจากซ้ายบน", "examples": [{"word": "คำ", "reading": "การอ่าน", "meaning_thai": "ความหมาย"}] }`
@@ -98,12 +98,15 @@ async function generateLesson(lessonType, jlptLevel, title) {
 กฎ:
 - explanation: ภาษาไทย อธิบายให้ชัดเจน
 ${kanaCharNote}
-- characters: ${isKana ? 'ทุกตัวในแถว' : '5-7 ตัว'} แต่ละตัวมี examples 2-3 คำ
+- characters: ${isKana ? 'ทุกตัวในแถว' : '5 ตัว'} แต่ละตัวมี examples 2 คำเท่านั้น
 - quiz: 5 ข้อ หลากหลาย (จับคู่อักษร / เลือกการอ่าน / เลือกความหมาย) answer_index คือ index 0-3`;
+
+  // kanji lessons have more content (5 chars × 2 examples + quiz) so need more tokens
+  const maxTokens = isKana ? 2048 : 4096;
 
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2048,
+    max_tokens: maxTokens,
     messages: [{ role: 'user', content: prompt }],
   });
 
