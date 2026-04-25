@@ -85,6 +85,9 @@ export default function DashboardPage() {
           <button onClick={() => navigate('/grammar')} className="btn-secondary">
             ไวยากรณ์
           </button>
+          <button onClick={() => navigate('/reading')} className="btn-secondary">
+            การอ่าน
+          </button>
           <button onClick={handleLogout} className="btn-secondary">ออกจากระบบ</button>
         </div>
       </header>

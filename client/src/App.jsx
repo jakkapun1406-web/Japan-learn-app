@@ -11,6 +11,8 @@ import VocabPage from './pages/VocabPage';
 import ReviewPage from './pages/ReviewPage';
 import GrammarPage from './pages/GrammarPage';
 import GrammarLessonPage from './pages/GrammarLessonPage';
+import ReadingPage from './pages/ReadingPage';
+import ReadingLessonPage from './pages/ReadingLessonPage';
 import './App.css';
 
 // ============================================================
@@ -59,6 +61,14 @@ export default function App() {
         <Route
           path="/grammar/:lessonId"
           element={<ProtectedRoute><GrammarLessonPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/reading"
+          element={<ProtectedRoute><ReadingPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/reading/:lessonId"
+          element={<ProtectedRoute><ReadingLessonPage /></ProtectedRoute>}
         />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>

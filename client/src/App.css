@@ -945,6 +945,54 @@ body {
 .quiz-result-msg   { color: #666; margin-bottom: 1.25rem; }
 
 /* ============================================================
+   READING PAGE — character grid and char cards
+   ============================================================ */
+.reading-char-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.reading-char-card {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.reading-char-display {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.reading-char-romaji {
+  font-size: 1rem;
+  color: #667eea;
+  margin-bottom: 0.5rem;
+}
+
+.reading-char-hint {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+
+.reading-char-examples {
+  text-align: left;
+  font-size: 0.82rem;
+  color: #555;
+  border-top: 1px solid #eee;
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* ============================================================
    MOBILE RESPONSIVE
    ============================================================ */
 @media (max-width: 600px) {

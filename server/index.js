@@ -12,6 +12,7 @@ const reviewRoutes    = require('./routes/review.routes');
 const jlptVocabRoutes = require('./routes/jlptVocab.routes');
 const jlptDeckRoutes  = require('./routes/jlptDeck.routes');
 const grammarRoutes   = require('./routes/grammar.routes');
+const readingRoutes   = require('./routes/reading.routes');
 
 // ============================================================
 // APP SETUP
@@ -35,6 +36,7 @@ app.use('/api/decks/:deckId/review', reviewRoutes);
 app.use('/api/jlpt-vocab',           jlptVocabRoutes);
 app.use('/api/jlpt-decks',           jlptDeckRoutes);
 app.use('/api/grammar',              grammarRoutes);
+app.use('/api/reading',              readingRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
