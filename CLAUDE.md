@@ -166,6 +166,7 @@ VITE_API_URL=http://localhost:3001
 | GET    | `/api/jlpt-vocab`                 | Yes  | ดึง vocab จากคลัง jlpt_vocab       |
 | GET    | `/api/grammar/:level`             | Yes  | ดึงรายการบทเรียน (N5–N1)           |
 | GET    | `/api/grammar/lesson/:id`         | Yes  | ดึงบทเรียน + examples + quiz       |
+| GET    | `/api/speaking/words/:level`      | Yes  | ดึงคำศัพท์สำหรับฝึกพูด (shuffle + limit) |
 
 CORS is whitelisted to `http://localhost:5173` only.
 
@@ -187,8 +188,8 @@ CORS is whitelisted to `http://localhost:5173` only.
 | Grammar lessons (module)        | Done — DB, API, UI, mini-quiz ✓                     |
 | Grammar lessons (N5 seed)       | Done — 5 lessons seeded via Claude Haiku ✓          |
 | Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete    |
-| Kana / Kanji reading            | Planned      |
-| Listening / Speaking            | Planned      |
+| Kana / Kanji reading            | Done — hiragana/katakana/kanji-N5 lessons + quiz ✓  |
+| Speaking practice               | Done — Web Speech API, match kanji+reading, NFKC normalize, TTS ✓ |
 | AI-assisted features            | Planned      |
 
 ---
@@ -309,6 +310,9 @@ Do not mix module systems between client and server.
 - [x] N5 grammar lessons seeded — 5 lessons in DB ✓
 - [ ] N4–N1 grammar lessons seeded — pending Anthropic API credits
 - [ ] End-to-end test: login → Dashboard → ไวยากรณ์ → lessons → quiz works
+- [x] Phase 8 — Reading Module: hiragana/katakana/kanji lessons + mini-quiz ✓
+- [x] Phase 9 — Speaking Practice: SpeakingPage + SpeakingSessionPage + useSpeechRecognition + TTS ✓
+- [x] Phase 9 bug fixes: NFKC normalize, stale-closure fix (useRef), kanji/reading dual match, show heard text ✓
 
 ---
 
@@ -324,11 +328,16 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- Phase 7 — Grammar Lessons Module fully implemented
-  - Migration 004 (`grammar_lessons` table with RLS + index) run in Supabase
-  - Fixed UNIQUE constraint bug: added `UNIQUE (jlpt_level, title)` for upsert ON CONFLICT
-  - Seeded N5 grammar lessons (5 lessons) via `node scripts/seedGrammarLessons.js n5`
-  - N4–N1 seed failed — Anthropic API credits exhausted
+- Phase 9 — Speaking Practice Module fully implemented + bug fixed
+  - Backend: `speaking.controller.js` + `speaking.routes.js` + registered in `server/index.js`
+  - Hook: `useSpeechRecognition.js` (Web Speech API, lang=ja-JP, maxAlternatives=3)
+  - Hook: `useTextToSpeech.js` (SpeechSynthesis, ja-JP voice, TTS buttons across all pages)
+  - Pages: `SpeakingPage.jsx` (level/count setup) + `SpeakingSessionPage.jsx` (practice session)
+  - Bug fixes applied to `SpeakingSessionPage.jsx`:
+    - Dual match: compares SpeechRecognition result against both `word.word` (kanji) AND `word.reading` (hiragana)
+    - NFKC normalize: strips spaces (incl. ideographic 　), punctuation (。、！？), then `.normalize('NFKC')`
+    - Stale closure fix: `useRef(word)` + `useEffect` so `handleResult` always reads current word even if re-rendered
+    - Show heard text: `heard` state displays "ระบบได้ยินว่า: ___" after recognition
 
 ---
 
@@ -337,4 +346,5 @@ Do not mix module systems between client and server.
 1. Top up Anthropic API credits at console.anthropic.com/billing
 2. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
 3. End-to-end test: login → Dashboard → click ไวยากรณ์ → N5 lessons render → mini-quiz works
+4. Plan next feature — AI-powered hints / explanations via Claude
 4. Plan next feature (Kana/Kanji reading practice or AI hints)

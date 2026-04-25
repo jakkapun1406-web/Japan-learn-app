@@ -1,7 +1,7 @@
 // ============================================================
 // IMPORTS
 // ============================================================
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
@@ -10,7 +10,21 @@ import { JLPT_COLORS } from '../constants/jlptLevels';
 // ============================================================
 // HELPERS
 // ============================================================
-const normalize = (s) => s.trim().replace(/\s+/g, '').toLowerCase();
+// Strip punctuation + all space variants, then NFKC-canonicalize Unicode.
+// SpeechRecognition often appends 。or inserts spaces between kana (e.g. "き る。")
+const normalize = (s) =>
+  s.replace(/[。、！？.!?,\s　 ]/g, '')
+    .trim()
+    .normalize('NFKC')
+    .toLowerCase();
+
+// ============================================================
+// MATCH HELPERS — เทียบเสียงกับทั้ง reading (ฮิระงะนะ) และ word (คันจิ)
+// เพราะ SpeechRecognition มักจะ return คำในรูปคันจิ ไม่ใช่ฮิระงะนะ
+// ============================================================
+const matchesWord = (alt, wordObj) =>
+  normalize(alt) === normalize(wordObj.reading) ||
+  normalize(alt) === normalize(wordObj.word);
 
 // ============================================================
 // SPEAKING SESSION PAGE — ฝึกออกเสียงทีละคำ
@@ -35,17 +49,23 @@ export default function SpeakingSessionPage() {
   const [result,      setResult]      = useState(null);  // null | 'correct' | 'wrong'
   const [score,       setScore]       = useState(0);
   const [done,        setDone]        = useState(false);
+  const [heard,       setHeard]       = useState('');   // สิ่งที่ระบบได้ยิน
 
-  const word = words[currentIdx];
+  const word    = words[currentIdx];
+  const wordRef = useRef(word);
+  useEffect(() => { wordRef.current = word; }, [word]);
 
   // --- SPEECH RECOGNITION ---
+  // useCallback has no deps — wordRef.current always points to current word,
+  // avoiding stale closure when React re-renders between start() and onresult
   const handleResult = useCallback((alternatives) => {
-    const correct = alternatives.some(
-      (alt) => normalize(alt) === normalize(word.reading)
-    );
+    const current = wordRef.current;
+    const best    = alternatives[0] || '';
+    setHeard(best);
+    const correct = alternatives.some((alt) => matchesWord(alt, current));
     setResult(correct ? 'correct' : 'wrong');
     if (correct) setScore((s) => s + 1);
-  }, [word]);
+  }, []);
 
   const { listening, start, stop } = useSpeechRecognition({ onResult: handleResult });
   const { speak } = useTextToSpeech();
@@ -59,6 +79,7 @@ export default function SpeakingSessionPage() {
       setCurrentIdx(next);
       setShowHint(false);
       setResult(null);
+      setHeard('');
     }
   };
 
@@ -68,6 +89,7 @@ export default function SpeakingSessionPage() {
     setResult(null);
     setScore(0);
     setDone(false);
+    setHeard('');
   };
 
   // --- RENDER: DONE SCREEN ---
@@ -184,6 +206,11 @@ export default function SpeakingSessionPage() {
                     ? '✅ ถูกต้อง!'
                     : `❌ ผิด — การอ่านที่ถูก: ${word.reading}`}
                 </div>
+                {heard && (
+                  <p className="speaking-heard">
+                    ระบบได้ยินว่า: <strong>{heard}</strong>
+                  </p>
+                )}
                 {word.meaning && (
                   <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.25rem' }}>
                     ความหมาย: {word.meaning}

@@ -1005,6 +1005,7 @@ body {
 .speaking-result { font-size: 1.1rem; text-align: center; font-weight: 600; padding: 0.5rem 1rem; border-radius: 6px; margin: 0.5rem auto; max-width: 400px; }
 .speaking-result.correct { color: #2e7d32; background: #e8f5e9; }
 .speaking-result.wrong { color: #c62828; background: #ffebee; }
+.speaking-heard { font-size: 0.88rem; color: #666; text-align: center; margin: 0.25rem 0 0.5rem; }
 .speaking-word-count-group { display: flex; gap: 0.5rem; justify-content: center; margin: 1rem 0; }
 .speaking-word-count-btn { padding: 0.4rem 1.2rem; border-radius: 20px; border: 2px solid #667eea; background: #fff; color: #667eea; cursor: pointer; font-weight: 600; transition: background 0.15s; }
 .speaking-word-count-btn.active { background: #667eea; color: #fff; }
