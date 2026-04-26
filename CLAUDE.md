@@ -31,7 +31,8 @@ japanese-app/
 │       ├── assets/            # Static images (hero.png, etc.)
 │       ├── components/
 │       │   ├── Deck/          # DeckCard.jsx, CreateDeckModal.jsx
-│       │   ├── Flashcard/     # ReviewCard.jsx, ReviewResult.jsx
+│       │   ├── Flashcard/     # ReviewCard.jsx, ReviewResult.jsx, VocabHintPanel.jsx
+│       │   ├── Grammar/       # GrammarExplainModal.jsx
 │       │   └── Vocabulary/    # VocabCard.jsx, AddVocabModal.jsx
 │       ├── constants/
 │       │   └── jlptLevels.js  # N5–N1 level definitions + JLPT_COLORS
@@ -42,12 +43,13 @@ japanese-app/
 │       ├── lib/
 │       │   └── supabaseClient.js  # Supabase browser client
 │       ├── pages/
-│       │   ├── DashboardPage.jsx      # JLPT + user deck sections
+│       │   ├── DashboardPage.jsx      # JLPT + user deck sections + สถิติ nav button
 │       │   ├── DeckPage.jsx           # Deck detail view
 │       │   ├── VocabPage.jsx          # Vocab list for a deck
 │       │   ├── ReviewPage.jsx         # SRS flashcard review
 │       │   ├── GrammarPage.jsx        # Lesson browser — tabs N5–N1 + lesson cards
-│       │   ├── GrammarLessonPage.jsx  # Lesson detail + examples + mini-quiz
+│       │   ├── GrammarLessonPage.jsx  # Lesson detail + examples + mini-quiz + AI explain
+│       │   ├── ProgressPage.jsx       # User progress stats — streak, mastery, by JLPT level
 │       │   ├── ReadingPage.jsx        # Kana/Kanji reading module — lesson selector
 │       │   ├── ReadingLessonPage.jsx  # Reading lesson + character quiz
 │       │   ├── SpeakingPage.jsx       # Speaking practice — level + word count setup
@@ -56,10 +58,12 @@ japanese-app/
 │       │   └── RegisterPage.jsx
 │       ├── services/
 │       │   ├── apiClient.js       # Axios instance
+│       │   ├── aiService.js       # getVocabHint, getGrammarExplain (Claude Haiku)
 │       │   ├── deckService.js     # getDecks, createDeck, deleteDeck, initJlptDecks
 │       │   ├── vocabService.js    # getVocabByDeck, addVocabCard, deleteVocabCard
 │       │   ├── reviewService.js   # getReviewCards, submitReview
 │       │   ├── grammarService.js  # getLessons, getLessonById
+│       │   ├── progressService.js # getProgressStats
 │       │   ├── readingService.js  # getKanaLessons, getKanjiLessons, getLessonById
 │       │   └── speakingService.js # getWordsForLevel
 │       ├── utils/
@@ -70,12 +74,14 @@ japanese-app/
 ├── server/                    # Express API backend
 │   ├── controllers/
 │   │   ├── auth.controller.js
+│   │   ├── ai.controller.js         # getVocabHint, getGrammarExplain (claude-haiku-4-5)
 │   │   ├── deck.controller.js
 │   │   ├── vocab.controller.js
 │   │   ├── review.controller.js
 │   │   ├── jlptVocab.controller.js
 │   │   ├── jlptDeck.controller.js   # initJlptDecks — auto-create N5–N1 decks
 │   │   ├── grammar.controller.js    # getLessons, getLessonById
+│   │   ├── progress.controller.js   # getProgressStats — aggregates review_logs + vocab_cards
 │   │   ├── reading.controller.js    # getKanaLessons, getKanjiLessons, getLessonById
 │   │   └── speaking.controller.js   # getWordsForLevel (shuffle + limit)
 │   ├── lib/
@@ -84,12 +90,14 @@ japanese-app/
 │   │   └── auth.middleware.js # JWT / session verification
 │   ├── routes/
 │   │   ├── auth.routes.js
+│   │   ├── ai.routes.js             # POST /api/ai/vocab-hint, /api/ai/grammar-explain
 │   │   ├── deck.routes.js
 │   │   ├── vocab.routes.js
 │   │   ├── review.routes.js
 │   │   ├── jlptVocab.routes.js
 │   │   ├── jlptDeck.routes.js       # POST /api/jlpt-decks/init
 │   │   ├── grammar.routes.js        # GET /api/grammar/:level, /api/grammar/lesson/:id
+│   │   ├── progress.routes.js       # GET /api/progress/stats
 │   │   ├── reading.routes.js        # GET /api/reading/kana/:type, /kanji/:level, /lesson/:id
 │   │   └── speaking.routes.js       # GET /api/speaking/words/:level
 │   ├── scripts/
@@ -188,6 +196,9 @@ VITE_API_URL=http://localhost:3001
 | GET    | `/api/reading/kana/:type`         | Yes  | ดึงบทเรียน hiragana หรือ katakana         |
 | GET    | `/api/reading/kanji/:level`       | Yes  | ดึงบทเรียนคันจิตาม JLPT level            |
 | GET    | `/api/reading/lesson/:id`         | Yes  | ดึงบทเรียน + quiz characters              |
+| GET    | `/api/progress/stats`             | Yes  | สถิติการเรียนรู้ (streak, mastery, byLevel) |
+| POST   | `/api/ai/vocab-hint`              | Yes  | AI mnemonic + example + related words     |
+| POST   | `/api/ai/grammar-explain`         | Yes  | AI grammar deep-explanation + breakdown   |
 
 CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production).
 
@@ -211,15 +222,16 @@ CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production
 | Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete    |
 | Kana / Kanji reading            | Done — hiragana/katakana/kanji-N5 lessons + quiz ✓  |
 | Speaking practice               | Done — Web Speech API, match kanji+reading, NFKC normalize, TTS ✓ |
-| AI-assisted features            | Planned      |
+| User progress dashboard         | Done — `/progress` page: streak, mastery, byLevel bars ✓           |
+| AI vocab hints                  | Done — VocabHintPanel in ReviewCard: mnemonic, example, related ✓  |
+| AI grammar explanations         | Done — GrammarExplainModal: deeperExplanation, breakdown, mistakes ✓|
+| Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete                    |
 
 ---
 
 ## Features Planned
 
-- AI-powered hints and explanations via Anthropic Claude
 - Listening practice (audio comprehension)
-- User progress dashboard (streaks, review stats)
 - N4–N1 grammar lessons (pending Anthropic API credits)
 
 ---
@@ -365,6 +377,8 @@ Do not mix module systems between client and server.
 - [x] Deployment prep — `client/vercel.json` + `server/render.yaml` + CORS FRONTEND_URL ✓
 - [x] Deployed — Frontend: https://japan-learn-app-tbky.vercel.app · Backend: https://japan-learn-app.onrender.com ✓
 - [x] Post-deploy fix — CORS blocked (FRONTEND_URL missing on Render) + frontend pointing to localhost (VITE_API_URL not set on Vercel) — both fixed ✓
+- [x] Phase 10 — User Progress Dashboard: `/progress` page, `GET /api/progress/stats`, streak + mastery + byLevel aggregation from existing tables ✓
+- [x] Phase 11 — AI-Powered Hints: VocabHintPanel (mnemonic/example/related) in ReviewCard + GrammarExplainModal (deeperExplanation/breakdown/commonMistakes) in GrammarLessonPage ✓
 
 ---
 
@@ -380,11 +394,10 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- Post-deploy backend connection fix (2026-04-26)
-  - Root cause 1: `FRONTEND_URL` env var was missing on Render → CORS blocked every request from Vercel
-  - Root cause 2: `VITE_API_URL` was `http://localhost:3001` on Vercel → frontend called localhost in browser
-  - Fix: set `FRONTEND_URL=https://japan-learn-app-tbky.vercel.app` on Render, set `VITE_API_URL=https://japan-learn-app.onrender.com` on Vercel, redeploy both
-  - Also added `GET /` root route to `server/index.js`
+- Phase 10 + 11 implementation (2026-04-26)
+  - Phase 10: `server/controllers/progress.controller.js` + `server/routes/progress.routes.js` + `client/src/services/progressService.js` + `client/src/pages/ProgressPage.jsx`; mounted at `GET /api/progress/stats`; DashboardPage gets "สถิติ" nav button
+  - Phase 11: `server/controllers/ai.controller.js` + `server/routes/ai.routes.js` (claude-haiku-4-5); `client/src/services/aiService.js`; `client/src/components/Flashcard/VocabHintPanel.jsx` integrated into ReviewCard; `client/src/components/Grammar/GrammarExplainModal.jsx` integrated into GrammarLessonPage
+  - Both phases committed; not yet pushed to remote
 - Live URLs:
   - Frontend: https://japan-learn-app-tbky.vercel.app
   - Backend:  https://japan-learn-app.onrender.com
@@ -393,7 +406,8 @@ Do not mix module systems between client and server.
 
 ## Next Steps
 
-1. Verify live app end-to-end: login → Dashboard → ไวยากรณ์ → N5 lessons → mini-quiz
-2. Top up Anthropic API credits at console.anthropic.com/billing
-3. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
-4. Plan next feature — AI-powered hints / explanations via Claude
+1. Push to remote: `git push` — triggers Vercel + Render redeployments
+2. Verify live app: Dashboard → สถิติ → ProgressPage; flip flashcard → hint panel; grammar lesson → "อธิบายเพิ่มเติม" modal
+3. Top up Anthropic API credits at console.anthropic.com/billing
+4. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
+5. Plan next feature — Listening practice (audio comprehension)
