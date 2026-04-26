@@ -6,7 +6,7 @@ import { useTextToSpeech } from '../../hooks/useTextToSpeech';
 // ============================================================
 // VOCAB CARD — แสดงคำศัพท์ 1 คำ
 // ============================================================
-export default function VocabCard({ card, onDelete }) {
+export default function VocabCard({ card, onDelete, onEdit }) {
   const { speak } = useTextToSpeech();
 
   // --- RENDER ---
@@ -27,6 +27,13 @@ export default function VocabCard({ card, onDelete }) {
           title="ฟังเสียง"
         >
           🔊
+        </button>
+        <button
+          className="btn-icon"
+          onClick={() => onEdit(card)}
+          title="แก้ไขคำศัพท์"
+        >
+          ✏️
         </button>
         <button
           className="btn-icon-danger"

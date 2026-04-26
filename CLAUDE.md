@@ -31,9 +31,9 @@ japanese-app/
 │       ├── assets/            # Static images (hero.png, etc.)
 │       ├── components/
 │       │   ├── Deck/          # DeckCard.jsx, CreateDeckModal.jsx
-│       │   ├── Flashcard/     # ReviewCard.jsx, ReviewResult.jsx, VocabHintPanel.jsx
+│       │   ├── Flashcard/     # ReviewCard.jsx, ReviewResult.jsx
 │       │   ├── Grammar/       # GrammarExplainModal.jsx
-│       │   └── Vocabulary/    # VocabCard.jsx, AddVocabModal.jsx
+│       │   └── Vocabulary/    # VocabCard.jsx, AddVocabModal.jsx, EditVocabModal.jsx
 │       ├── constants/
 │       │   └── jlptLevels.js  # N5–N1 level definitions + JLPT_COLORS
 │       ├── hooks/
@@ -58,9 +58,9 @@ japanese-app/
 │       │   └── RegisterPage.jsx
 │       ├── services/
 │       │   ├── apiClient.js       # Axios instance
-│       │   ├── aiService.js       # getVocabHint, getGrammarExplain (Claude Haiku)
+│       │   ├── aiService.js       # getGrammarExplain (Claude Haiku)
 │       │   ├── deckService.js     # getDecks, createDeck, deleteDeck, initJlptDecks
-│       │   ├── vocabService.js    # getVocabByDeck, addVocabCard, deleteVocabCard
+│       │   ├── vocabService.js    # getVocabByDeck, addVocabCard, updateVocabCard, deleteVocabCard
 │       │   ├── reviewService.js   # getReviewCards, submitReview
 │       │   ├── grammarService.js  # getLessons, getLessonById
 │       │   ├── progressService.js # getProgressStats
@@ -74,7 +74,7 @@ japanese-app/
 ├── server/                    # Express API backend
 │   ├── controllers/
 │   │   ├── auth.controller.js
-│   │   ├── ai.controller.js         # getVocabHint, getGrammarExplain (claude-haiku-4-5)
+│   │   ├── ai.controller.js         # getGrammarExplain (claude-haiku-4-5)
 │   │   ├── deck.controller.js
 │   │   ├── vocab.controller.js
 │   │   ├── review.controller.js
@@ -90,7 +90,7 @@ japanese-app/
 │   │   └── auth.middleware.js # JWT / session verification
 │   ├── routes/
 │   │   ├── auth.routes.js
-│   │   ├── ai.routes.js             # POST /api/ai/vocab-hint, /api/ai/grammar-explain
+│   │   ├── ai.routes.js             # POST /api/ai/grammar-explain
 │   │   ├── deck.routes.js
 │   │   ├── vocab.routes.js
 │   │   ├── review.routes.js
@@ -185,6 +185,7 @@ VITE_API_URL=http://localhost:3001
 | DELETE | `/api/decks/:id`                  | Yes  | ลบ deck                            |
 | GET    | `/api/decks/:deckId/vocab`        | Yes  | ดึงคำศัพท์ใน deck                  |
 | POST   | `/api/decks/:deckId/vocab`        | Yes  | เพิ่มคำศัพท์ใน deck                |
+| PUT    | `/api/decks/:deckId/vocab/:cardId`| Yes  | แก้ไขคำศัพท์                       |
 | DELETE | `/api/decks/:deckId/vocab/:cardId`| Yes  | ลบคำศัพท์                         |
 | GET    | `/api/decks/:deckId/review`       | Yes  | ดึงการ์ดที่ถึงเวลา review          |
 | POST   | `/api/decks/:deckId/review`       | Yes  | ส่งผล review (grade 0–3)           |
@@ -197,7 +198,6 @@ VITE_API_URL=http://localhost:3001
 | GET    | `/api/reading/kanji/:level`       | Yes  | ดึงบทเรียนคันจิตาม JLPT level            |
 | GET    | `/api/reading/lesson/:id`         | Yes  | ดึงบทเรียน + quiz characters              |
 | GET    | `/api/progress/stats`             | Yes  | สถิติการเรียนรู้ (streak, mastery, byLevel) |
-| POST   | `/api/ai/vocab-hint`              | Yes  | AI mnemonic + example + related words     |
 | POST   | `/api/ai/grammar-explain`         | Yes  | AI grammar deep-explanation + breakdown   |
 
 CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production).
@@ -222,10 +222,10 @@ CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production
 | Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete    |
 | Kana / Kanji reading            | Done — hiragana/katakana/kanji-N5 lessons + quiz ✓  |
 | Speaking practice               | Done — Web Speech API, match kanji+reading, NFKC normalize, TTS ✓ |
-| User progress dashboard         | Done — `/progress` page: streak, mastery, byLevel bars ✓           |
-| AI vocab hints                  | Done — VocabHintPanel in ReviewCard: mnemonic, example, related ✓  |
-| AI grammar explanations         | Done — GrammarExplainModal: deeperExplanation, breakdown, mistakes ✓|
-| Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete                    |
+| User progress dashboard         | Done — `/progress` page: streak, mastery, byLevel bars ✓                    |
+| AI grammar explanations         | Done — GrammarExplainModal: deeperExplanation, breakdown, mistakes ✓         |
+| Vocab card edit                 | Done — EditVocabModal + PUT /api/decks/:deckId/vocab/:cardId ✓               |
+| Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete                             |
 
 ---
 
@@ -378,7 +378,8 @@ Do not mix module systems between client and server.
 - [x] Deployed — Frontend: https://japan-learn-app-tbky.vercel.app · Backend: https://japan-learn-app.onrender.com ✓
 - [x] Post-deploy fix — CORS blocked (FRONTEND_URL missing on Render) + frontend pointing to localhost (VITE_API_URL not set on Vercel) — both fixed ✓
 - [x] Phase 10 — User Progress Dashboard: `/progress` page, `GET /api/progress/stats`, streak + mastery + byLevel aggregation from existing tables ✓
-- [x] Phase 11 — AI-Powered Hints: VocabHintPanel (mnemonic/example/related) in ReviewCard + GrammarExplainModal (deeperExplanation/breakdown/commonMistakes) in GrammarLessonPage ✓
+- [x] Phase 11 — AI Grammar Explanations: GrammarExplainModal (deeperExplanation/breakdown/commonMistakes) in GrammarLessonPage ✓ (AI vocab hint system removed)
+- [x] Phase 12 — Vocab Card Edit: EditVocabModal + `PUT /api/decks/:deckId/vocab/:cardId` + ✏️ button in VocabCard ✓
 
 ---
 
@@ -394,10 +395,9 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- Phase 10 + 11 implementation (2026-04-26)
-  - Phase 10: `server/controllers/progress.controller.js` + `server/routes/progress.routes.js` + `client/src/services/progressService.js` + `client/src/pages/ProgressPage.jsx`; mounted at `GET /api/progress/stats`; DashboardPage gets "สถิติ" nav button
-  - Phase 11: `server/controllers/ai.controller.js` + `server/routes/ai.routes.js` (claude-haiku-4-5); `client/src/services/aiService.js`; `client/src/components/Flashcard/VocabHintPanel.jsx` integrated into ReviewCard; `client/src/components/Grammar/GrammarExplainModal.jsx` integrated into GrammarLessonPage
-  - Both phases committed; not yet pushed to remote
+- Phase 12 — Vocab Card Edit (2026-04-26)
+  - Removed AI vocab hint system: deleted `VocabHintPanel.jsx`, removed `getVocabHint` from `ai.controller.js` + `ai.routes.js` + `aiService.js`
+  - Added vocab edit: `updateVocabCard` in `vocab.controller.js` + `PUT` route in `vocab.routes.js` + `updateVocabCard()` in `vocabService.js` + new `EditVocabModal.jsx` + ✏️ button in `VocabCard.jsx` + wired in `VocabPage.jsx`
 - Live URLs:
   - Frontend: https://japan-learn-app-tbky.vercel.app
   - Backend:  https://japan-learn-app.onrender.com
@@ -407,7 +407,7 @@ Do not mix module systems between client and server.
 ## Next Steps
 
 1. Push to remote: `git push` — triggers Vercel + Render redeployments
-2. Verify live app: Dashboard → สถิติ → ProgressPage; flip flashcard → hint panel; grammar lesson → "อธิบายเพิ่มเติม" modal
+2. Verify live app: VocabPage → click ✏️ → edit modal opens pre-filled → save → card updates in place
 3. Top up Anthropic API credits at console.anthropic.com/billing
 4. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
 5. Plan next feature — Listening practice (audio comprehension)

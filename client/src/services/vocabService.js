@@ -27,6 +27,14 @@ export const deleteVocabCard = async (deckId, cardId) => {
 };
 
 // ============================================================
+// UPDATE VOCAB CARD — แก้ไขคำศัพท์ที่มีอยู่
+// ============================================================
+export const updateVocabCard = async (deckId, cardId, updates) => {
+  const { data } = await apiClient.put(`/api/decks/${deckId}/vocab/${cardId}`, updates);
+  return data.card;
+};
+
+// ============================================================
 // IMPORT VOCAB — copy คำศัพท์จากคลัง JLPT เข้า deck
 // ============================================================
 export const importVocabFromJlpt = async (deckId, jlpt_level) => {

@@ -3,9 +3,10 @@
 // ============================================================
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { getVocabByDeck, addVocabCard, deleteVocabCard } from '../services/vocabService';
+import { getVocabByDeck, addVocabCard, deleteVocabCard, updateVocabCard } from '../services/vocabService';
 import VocabCard from '../components/Vocabulary/VocabCard';
 import AddVocabModal from '../components/Vocabulary/AddVocabModal';
+import EditVocabModal from '../components/Vocabulary/EditVocabModal';
 
 // ============================================================
 // VOCAB PAGE — แสดงคำศัพท์ทั้งหมดใน deck
@@ -20,6 +21,7 @@ export default function VocabPage() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingCard, setEditingCard] = useState(null);
   const [error, setError] = useState('');
 
   // --- HOOKS ---
@@ -44,6 +46,16 @@ export default function VocabPage() {
   const handleAdd = async (form) => {
     const newCard = await addVocabCard(deckId, form);
     setCards((prev) => [...prev, newCard]);
+  };
+
+  const handleEdit = (card) => {
+    setEditingCard(card);
+  };
+
+  const handleSave = async (form) => {
+    const updated = await updateVocabCard(deckId, editingCard.id, form);
+    setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    setEditingCard(null);
   };
 
   const handleDelete = async (cardId) => {
@@ -78,7 +90,7 @@ export default function VocabPage() {
       ) : (
         <div className="vocab-list">
           {cards.map((card) => (
-            <VocabCard key={card.id} card={card} onDelete={handleDelete} />
+            <VocabCard key={card.id} card={card} onDelete={handleDelete} onEdit={handleEdit} />
           ))}
         </div>
       )}
@@ -87,6 +99,14 @@ export default function VocabPage() {
         <AddVocabModal
           onClose={() => setShowModal(false)}
           onAdd={handleAdd}
+        />
+      )}
+
+      {editingCard && (
+        <EditVocabModal
+          card={editingCard}
+          onClose={() => setEditingCard(null)}
+          onSave={handleSave}
         />
       )}
     </div>

@@ -99,6 +99,40 @@ const deleteVocabCard = async (req, res) => {
 };
 
 // ============================================================
+// UPDATE VOCAB CARD — แก้ไขคำศัพท์ที่มีอยู่
+// ============================================================
+const updateVocabCard = async (req, res) => {
+  const userId = req.user.id;
+  const { deckId, cardId } = req.params;
+  const { word, reading, meaning, part_of_speech, jlpt_level } = req.body;
+
+  // --- VALIDATION ---
+  if (!word || !reading || !meaning) {
+    return res.status(400).json({ error: 'word, reading, and meaning are required' });
+  }
+
+  try {
+    const owned = await verifyDeckOwner(deckId, userId);
+    if (!owned) return res.status(404).json({ error: 'Deck not found' });
+
+    const { data, error } = await supabase
+      .from('vocab_cards')
+      .update({ word, reading, meaning, part_of_speech, jlpt_level })
+      .eq('id', cardId)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return res.status(200).json({ card: data });
+  } catch (err) {
+    console.error('[updateVocabCard]', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ============================================================
 // EXPORTS
 // ============================================================
-module.exports = { getVocabByDeck, addVocabCard, deleteVocabCard };
+module.exports = { getVocabByDeck, addVocabCard, deleteVocabCard, updateVocabCard };

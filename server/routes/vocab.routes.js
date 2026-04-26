@@ -2,7 +2,7 @@
 // IMPORTS
 // ============================================================
 const express = require('express');
-const { getVocabByDeck, addVocabCard, deleteVocabCard } = require('../controllers/vocab.controller');
+const { getVocabByDeck, addVocabCard, deleteVocabCard, updateVocabCard } = require('../controllers/vocab.controller');
 const { requireAuth } = require('../middleware/auth.middleware');
 
 const router = express.Router({ mergeParams: true }); // mergeParams เพื่อรับ :deckId จาก parent route
@@ -12,6 +12,7 @@ const router = express.Router({ mergeParams: true }); // mergeParams เพื�
 // ============================================================
 router.get('/',          requireAuth, getVocabByDeck); // GET  /api/decks/:deckId/vocab
 router.post('/',         requireAuth, addVocabCard);   // POST /api/decks/:deckId/vocab
+router.put('/:cardId',    requireAuth, updateVocabCard);  // PUT    /api/decks/:deckId/vocab/:cardId
 router.delete('/:cardId', requireAuth, deleteVocabCard); // DELETE /api/decks/:deckId/vocab/:cardId
 
 // ============================================================
