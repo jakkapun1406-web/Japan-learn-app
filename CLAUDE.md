@@ -167,6 +167,7 @@ VITE_API_URL=http://localhost:3001
 
 | Method | Path                              | Auth | Description                        |
 |--------|-----------------------------------|------|------------------------------------|
+| GET    | `/`                               | No   | Root — `{ status: "ok", message: "Server is running" }` |
 | GET    | `/api/health`                     | No   | Server health check                |
 | POST   | `/api/auth/register`              | No   | สมัครสมาชิก                        |
 | POST   | `/api/auth/login`                 | No   | เข้าสู่ระบบ                        |
@@ -362,6 +363,8 @@ Do not mix module systems between client and server.
 - [x] Phase 9 — Speaking Practice: SpeakingPage + SpeakingSessionPage + useSpeechRecognition + TTS ✓
 - [x] Phase 9 bug fixes: NFKC normalize, stale-closure fix (useRef), kanji/reading dual match, show heard text ✓
 - [x] Deployment prep — `client/vercel.json` + `server/render.yaml` + CORS FRONTEND_URL ✓
+- [x] Deployed — Frontend: https://japan-learn-app-tbky.vercel.app · Backend: https://japan-learn-app.onrender.com ✓
+- [x] Post-deploy fix — CORS blocked (FRONTEND_URL missing on Render) + frontend pointing to localhost (VITE_API_URL not set on Vercel) — both fixed ✓
 
 ---
 
@@ -377,19 +380,20 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- Deployment prep — app is ready to deploy (configs committed, CORS updated)
-  - `client/vercel.json` — SPA rewrite rule for React Router on Vercel
-  - `server/render.yaml` — Render Node web service config with all env var keys
-  - `server/index.js` — CORS updated to allow `FRONTEND_URL` env var alongside localhost
-  - `.env.example` — updated with `FRONTEND_URL` key
-  - See **Deployment** section above for step-by-step deploy instructions
+- Post-deploy backend connection fix (2026-04-26)
+  - Root cause 1: `FRONTEND_URL` env var was missing on Render → CORS blocked every request from Vercel
+  - Root cause 2: `VITE_API_URL` was `http://localhost:3001` on Vercel → frontend called localhost in browser
+  - Fix: set `FRONTEND_URL=https://japan-learn-app-tbky.vercel.app` on Render, set `VITE_API_URL=https://japan-learn-app.onrender.com` on Vercel, redeploy both
+  - Also added `GET /` root route to `server/index.js`
+- Live URLs:
+  - Frontend: https://japan-learn-app-tbky.vercel.app
+  - Backend:  https://japan-learn-app.onrender.com
 
 ---
 
 ## Next Steps
 
-1. **Deploy** — push to GitHub, create Render service (root: `server/`), create Vercel project (root: `client/`), set all env vars, cross-link URLs.
+1. Verify live app end-to-end: login → Dashboard → ไวยากรณ์ → N5 lessons → mini-quiz
 2. Top up Anthropic API credits at console.anthropic.com/billing
 3. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
-4. End-to-end test: login → Dashboard → click ไวยากรณ์ → N5 lessons render → mini-quiz works
-5. Plan next feature — AI-powered hints / explanations via Claude
+4. Plan next feature — AI-powered hints / explanations via Claude

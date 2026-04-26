@@ -55,7 +55,10 @@ app.use('/api/grammar',              grammarRoutes);
 app.use('/api/reading',              readingRoutes);
 app.use('/api/speaking',             speakingRoutes);
 
-// Health check
+// Root + health check
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
