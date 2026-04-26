@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { GRADE_LABELS } from '../../utils/srsAlgorithm';
 import { useTextToSpeech } from '../../hooks/useTextToSpeech';
+import VocabHintPanel from './VocabHintPanel';
 
 // ============================================================
 // REVIEW CARD — แสดงการ์ดและปุ่ม grade หลังพลิก
@@ -55,6 +56,11 @@ export default function ReviewCard({ card, onGrade }) {
             {card.part_of_speech && (
               <span className="review-pos">{card.part_of_speech}</span>
             )}
+            <VocabHintPanel
+              word={card.word}
+              reading={card.reading}
+              meaning={card.meaning}
+            />
           </div>
         )}
       </div>

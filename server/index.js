@@ -15,6 +15,7 @@ const grammarRoutes   = require('./routes/grammar.routes');
 const readingRoutes   = require('./routes/reading.routes');
 const speakingRoutes  = require('./routes/speaking.routes');
 const progressRoutes  = require('./routes/progress.routes');
+const aiRoutes        = require('./routes/ai.routes');
 
 // ============================================================
 // APP SETUP
@@ -56,6 +57,7 @@ app.use('/api/grammar',              grammarRoutes);
 app.use('/api/reading',              readingRoutes);
 app.use('/api/speaking',             speakingRoutes);
 app.use('/api/progress',             progressRoutes);
+app.use('/api/ai',                   aiRoutes);
 
 // Root + health check
 app.get('/', (req, res) => {

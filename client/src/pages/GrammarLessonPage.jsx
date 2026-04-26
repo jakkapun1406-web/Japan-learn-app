@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getLessonById } from '../services/grammarService';
 import { JLPT_COLORS } from '../constants/jlptLevels';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
+import GrammarExplainModal from '../components/Grammar/GrammarExplainModal';
 
 // ============================================================
 // GRAMMAR LESSON PAGE — lesson detail + mini-quiz
@@ -18,6 +19,9 @@ export default function GrammarLessonPage() {
   const [lesson, setLesson]           = useState(null);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState('');
+
+  // explain modal state
+  const [explainTarget, setExplainTarget] = useState(null); // null | { japanese, reading, thai }
 
   // quiz state
   const [quizStarted, setQuizStarted] = useState(false);
@@ -179,9 +183,16 @@ export default function GrammarLessonPage() {
               <div className="examples-list">
                 {lesson.examples.map((ex, i) => (
                   <div key={i} className="example-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <p className="example-japanese" style={{ margin: 0 }}>{ex.japanese}</p>
                       <button className="btn-tts" onClick={() => speak(ex.japanese)} title="ฟังเสียง">🔊</button>
+                      <button
+                        className="btn-secondary btn-explain"
+                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}
+                        onClick={() => setExplainTarget(ex)}
+                      >
+                        อธิบายเพิ่มเติม
+                      </button>
                     </div>
                     <p className="example-reading">{ex.reading}</p>
                     <p className="example-thai">{ex.thai}</p>
@@ -214,6 +225,16 @@ export default function GrammarLessonPage() {
         </section>
 
       </main>
+
+      {/* ---- EXPLAIN MODAL ---- */}
+      {explainTarget && (
+        <GrammarExplainModal
+          grammarTitle={lesson.title}
+          example={explainTarget}
+          onClose={() => setExplainTarget(null)}
+        />
+      )}
+
     </div>
   );
 }
