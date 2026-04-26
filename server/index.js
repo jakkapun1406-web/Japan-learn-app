@@ -14,6 +14,7 @@ const jlptDeckRoutes  = require('./routes/jlptDeck.routes');
 const grammarRoutes   = require('./routes/grammar.routes');
 const readingRoutes   = require('./routes/reading.routes');
 const speakingRoutes  = require('./routes/speaking.routes');
+const progressRoutes  = require('./routes/progress.routes');
 
 // ============================================================
 // APP SETUP
@@ -54,6 +55,7 @@ app.use('/api/jlpt-decks',           jlptDeckRoutes);
 app.use('/api/grammar',              grammarRoutes);
 app.use('/api/reading',              readingRoutes);
 app.use('/api/speaking',             speakingRoutes);
+app.use('/api/progress',             progressRoutes);
 
 // Root + health check
 app.get('/', (req, res) => {
