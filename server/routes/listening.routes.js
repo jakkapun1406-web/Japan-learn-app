@@ -2,7 +2,7 @@
 // IMPORTS
 // ============================================================
 const express = require('express');
-const { authenticateUser } = require('../middleware/auth.middleware');
+const { requireAuth } = require('../middleware/auth.middleware');
 const { getListeningQuestions } = require('../controllers/listening.controller');
 
 // ============================================================
@@ -13,7 +13,7 @@ const router = express.Router();
 // ============================================================
 // ROUTES
 // ============================================================
-router.get('/questions/:level', authenticateUser, getListeningQuestions);
+router.get('/questions/:level', requireAuth, getListeningQuestions);
 
 // ============================================================
 // EXPORTS

@@ -21,6 +21,20 @@ const shuffle = (arr) => {
 };
 
 // ============================================================
+// HELPERS — แยก Thai meaning ออกจาก format "word (reading): thai"
+// เพื่อไม่ให้ตัวเลือกเผยคำตอบ (เช่น "便利 (べんり): สะดวก" → "สะดวก")
+// ============================================================
+const extractMeaning = (meaning) => {
+  if (!meaning) return '';
+  // Handle both half-width ':' (U+003A) and full-width '：' (U+FF1A)
+  const idx = Math.max(meaning.lastIndexOf(':'), meaning.lastIndexOf('：'));
+  if (idx > -1 && idx < meaning.length - 1) {
+    return meaning.slice(idx + 1).trim();
+  }
+  return meaning.trim();
+};
+
+// ============================================================
 // GET LISTENING QUESTIONS — ดึงคำและสร้างข้อสอบ 4 ตัวเลือก
 // GET /api/listening/questions/:level?limit=10
 // ============================================================
@@ -47,8 +61,13 @@ const getListeningQuestions = async (req, res) => {
       return res.status(404).json({ error: `Not enough vocab found for level ${level}` });
     }
 
-    // กรองคำที่มี meaning ก่อน แล้วสุ่ม
-    const pool = shuffle(data.filter((w) => w.meaning));
+    // กรองคำที่มี meaning แล้ว normalize เป็น Thai-only ก่อนสุ่ม
+    const pool = shuffle(
+      data
+        .filter((w) => w.meaning)
+        .map((w) => ({ ...w, displayMeaning: extractMeaning(w.meaning) }))
+        .filter((w) => w.displayMeaning)
+    );
 
     // ถ้ามีน้อยกว่า 4 คำ ใช้ไม่ได้
     if (pool.length < 4) {
@@ -60,23 +79,23 @@ const getListeningQuestions = async (req, res) => {
 
     // สร้างข้อสอบ: แต่ละคำ = 1 target + 3 distractors จาก pool
     const questions = targets.map((target, i) => {
-      // เลือก 3 distractors ที่มี meaning ต่างกัน
+      // เลือก 3 distractors ที่มี displayMeaning ต่างกัน
       const distractors = [];
       let di = 0;
       while (distractors.length < 3 && di < distractorPool.length) {
         const d = distractorPool[(i * 3 + di) % distractorPool.length];
-        if (d.meaning !== target.meaning) {
-          distractors.push(d.meaning);
+        if (d.displayMeaning !== target.displayMeaning) {
+          distractors.push(d.displayMeaning);
         }
         di++;
       }
       // กรณีขาด distractor ใช้ซ้ำจาก pool ทั้งหมด
       while (distractors.length < 3) {
-        distractors.push(pool[(i + distractors.length + 1) % pool.length].meaning);
+        distractors.push(pool[(i + distractors.length + 1) % pool.length].displayMeaning);
       }
 
-      const options = shuffle([target.meaning, ...distractors]);
-      const correctIndex = options.indexOf(target.meaning);
+      const options = shuffle([target.displayMeaning, ...distractors]);
+      const correctIndex = options.indexOf(target.displayMeaning);
 
       return {
         word: target.word,
