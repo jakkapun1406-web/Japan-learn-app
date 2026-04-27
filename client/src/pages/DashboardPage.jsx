@@ -91,6 +91,9 @@ export default function DashboardPage() {
           <button onClick={() => navigate('/speaking')} className="btn-secondary">
             การพูด
           </button>
+          <button onClick={() => navigate('/listening')} className="btn-secondary">
+            การฟัง
+          </button>
           <button onClick={() => navigate('/progress')} className="btn-secondary">
             สถิติ
           </button>
