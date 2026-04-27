@@ -1,10 +1,15 @@
 // ============================================================
 // IMPORTS
 // ============================================================
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { JLPT_COLORS } from '../constants/jlptLevels';
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+const LABELS = ['A', 'B', 'C', 'D'];
 
 // ============================================================
 // LISTENING SESSION PAGE — ฟังเสียงคำแล้วเลือกความหมายที่ถูก
@@ -16,36 +21,36 @@ export default function ListeningSessionPage() {
 
   const questions = location.state?.questions || [];
   const level     = location.state?.level     || 'N5';
+  const accentColor = JLPT_COLORS[level] || '#2d6482';
 
-  // --- GUARD: ถ้าไม่มีข้อสอบ → กลับหน้าเลือก ---
+  // --- STATE — ต้องอยู่ก่อน early return เสมอ (Rules of Hooks) ---
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [selected,   setSelected]   = useState(null);
+  const [score,      setScore]      = useState(0);
+  const [done,       setDone]       = useState(false);
+  // ซ่อน pulse ring หลังจาก user แตะปุ่มฟังครั้งแรก
+  const [hasTapped,  setHasTapped]  = useState(false);
+
+  // --- GUARD: ไม่มีข้อสอบ → กลับหน้าเลือก (หลัง hooks ทั้งหมด) ---
   if (questions.length === 0) {
     return <Navigate to="/listening" replace />;
   }
 
-  const accentColor = JLPT_COLORS[level] || '#667eea';
-
-  // --- STATE ---
-  const [currentIdx,   setCurrentIdx]   = useState(0);
-  const [selected,     setSelected]     = useState(null);  // index ที่เลือก หรือ null
-  const [score,        setScore]        = useState(0);
-  const [done,         setDone]         = useState(false);
-
   const question = questions[currentIdx];
-
-  // --- AUTO-PLAY: เล่นเสียงอัตโนมัติเมื่อเปลี่ยนข้อ ---
-  useEffect(() => {
-    if (!done && question) {
-      speak(question.word, 'ja-JP');
-    }
-  }, [currentIdx, done]);
+  const pctDone  = Math.round(((currentIdx + (selected !== null ? 1 : 0)) / questions.length) * 100);
 
   // --- HANDLERS ---
+
+  // ฟังเสียง — เรียกโดยตรงจาก user gesture เพื่อผ่าน mobile browser audio policy
+  const handleListen = () => {
+    setHasTapped(true);
+    speak(question.word, 'ja-JP');
+  };
+
   const handleSelect = (idx) => {
-    if (selected !== null) return;  // ป้องกันการเปลี่ยนคำตอบหลังจากเลือกแล้ว
+    if (selected !== null) return;
     setSelected(idx);
-    if (idx === question.correctIndex) {
-      setScore((s) => s + 1);
-    }
+    if (idx === question.correctIndex) setScore((s) => s + 1);
   };
 
   const handleNext = () => {
@@ -53,6 +58,8 @@ export default function ListeningSessionPage() {
     if (next >= questions.length) {
       setDone(true);
     } else {
+      // เรียก speak ภายใน gesture call stack → ผ่าน mobile policy โดยไม่ต้อง autoplay
+      speak(questions[next].word, 'ja-JP');
       setCurrentIdx(next);
       setSelected(null);
     }
@@ -63,146 +70,134 @@ export default function ListeningSessionPage() {
     setSelected(null);
     setScore(0);
     setDone(false);
+    setHasTapped(false);
   };
 
-  // --- HELPERS: สีปุ่มตัวเลือก ---
-  const getOptionStyle = (idx) => {
-    if (selected === null) return {};
-    if (idx === question.correctIndex) return { backgroundColor: '#4caf50', color: '#fff', borderColor: '#4caf50' };
-    if (idx === selected) return { backgroundColor: '#f44336', color: '#fff', borderColor: '#f44336' };
-    return { opacity: 0.5 };
+  // --- HELPERS: className ปุ่มตัวเลือก ---
+  const optionClass = (idx) => {
+    if (selected === null) return 'ls-option-btn pressable';
+    if (idx === question.correctIndex) return 'ls-option-btn correct';
+    if (idx === selected) return 'ls-option-btn wrong';
+    return 'ls-option-btn dimmed';
   };
 
   // --- RENDER: DONE SCREEN ---
   if (done) {
     const pct   = Math.round((score / questions.length) * 100);
     const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪';
+    const msg   = pct >= 80 ? 'เยี่ยมมาก! การฟังดีมากเลย'
+                : pct >= 50 ? 'ดีมาก! ลองฝึกอีกครั้ง'
+                : 'ลองฝึกอีกรอบแล้วค่อยทำใหม่นะ';
     return (
-      <div className="dashboard">
-        <header className="dashboard-header">
-          <h1>Japanese App</h1>
-          <div className="header-actions">
-            <button onClick={() => navigate('/listening')} className="btn-secondary">
-              ← เลือกระดับ
-            </button>
-            <button onClick={() => navigate('/dashboard')} className="btn-secondary">
-              Dashboard
-            </button>
-          </div>
+      <div className="ls-page">
+        <header className="ls-header">
+          <button className="ls-back-btn" onClick={() => navigate('/listening')}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>arrow_back</span>
+            เลือกระดับ
+          </button>
+          <span className="ls-header-title">ผลลัพธ์</span>
+          <span className="ls-level-pill" style={{ backgroundColor: accentColor }}>{level}</span>
         </header>
-        <main className="dashboard-content">
-          <section>
-            <div className="lesson-card" style={{ textAlign: 'center' }}>
-              <p className="quiz-result-emoji">{emoji}</p>
-              <p className="quiz-result-score">{score} / {questions.length} ข้อ ({pct}%)</p>
-              <p className="quiz-result-msg">
-                {pct >= 80
-                  ? 'เยี่ยมมาก! การฟังดีมากเลย'
-                  : pct >= 50
-                  ? 'ดีมาก! ลองฝึกอีกครั้ง'
-                  : 'ลองฝึกอีกรอบแล้วค่อยทำใหม่นะ'}
-              </p>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem' }}>
-                <button className="btn-primary" style={{ width: 'auto' }} onClick={handleRestart}>
-                  เล่นอีกครั้ง
-                </button>
-                <button className="btn-secondary" onClick={() => navigate('/listening')}>
-                  เลือกระดับ
-                </button>
-              </div>
+
+        <div className="ls-content">
+          <div className="ls-card" style={{ textAlign: 'center' }}>
+            <div className="ls-score-emoji">{emoji}</div>
+            <div className="ls-score-value">{score} / {questions.length}</div>
+            <p className="ls-score-msg">{pct}% — {msg}</p>
+            <div className="ls-done-actions">
+              <button className="ls-done-btn-outline pressable" onClick={handleRestart}>
+                เล่นอีกครั้ง
+              </button>
+              <button
+                className="ls-next-btn pressable"
+                style={{ flex: 1 }}
+                onClick={() => navigate('/listening')}
+              >
+                เลือกระดับ
+              </button>
             </div>
-          </section>
-        </main>
+          </div>
+        </div>
       </div>
     );
   }
 
   // --- RENDER: SESSION SCREEN ---
   return (
-    <div className="dashboard">
+    <div className="ls-page">
+
       {/* ---- HEADER ---- */}
-      <header className="dashboard-header">
-        <h1>Japanese App</h1>
-        <div className="header-actions">
-          <button onClick={() => navigate('/listening')} className="btn-secondary">
-            ← เลือกระดับ
-          </button>
-          <button onClick={() => navigate('/dashboard')} className="btn-secondary">
-            Dashboard
-          </button>
-        </div>
+      <header className="ls-header">
+        <button className="ls-back-btn" onClick={() => navigate('/listening')}>
+          <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>arrow_back</span>
+          เลือกระดับ
+        </button>
+        <span className="ls-counter">ข้อ {currentIdx + 1} / {questions.length}</span>
+        <span className="ls-level-pill" style={{ backgroundColor: accentColor }}>{level}</span>
       </header>
 
-      <main className="dashboard-content">
-        <section>
-          <div className="lesson-card" style={{ textAlign: 'center' }}>
+      {/* ---- PROGRESS BAR ---- */}
+      <div className="ls-progress-track">
+        <div className="ls-progress-fill" style={{ width: `${pctDone}%` }} />
+      </div>
 
-            {/* ---- PROGRESS ---- */}
-            <p className="quiz-progress">ข้อ {currentIdx + 1} / {questions.length}</p>
+      <div className="ls-content">
 
-            {/* ---- LEVEL BADGE ---- */}
+        {/* ---- PLAYER CARD ---- */}
+        <div className="ls-card" style={{ textAlign: 'center' }}>
+          <div className="ls-player-icon">
             <span
-              className="grammar-lesson-badge"
-              style={{ backgroundColor: accentColor }}
+              className="material-symbols-outlined"
+              style={{ fontSize: '2.5rem', fontVariationSettings: "'FILL' 1" }}
             >
-              {level}
+              headphones
             </span>
-
-            {/* ---- PLAY BUTTON ---- */}
-            <div style={{ margin: '1.5rem 0 1rem' }}>
-              <button
-                className="btn-tts btn-tts-lg"
-                onClick={() => speak(question.word, 'ja-JP')}
-                title="ฟังอีกครั้ง"
-              >
-                🔊 ฟังอีกครั้ง
-              </button>
-            </div>
-
-            {/* ---- ANSWER OPTIONS ---- */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.5rem' }}>
-              {question.options.map((opt, idx) => (
-                <button
-                  key={idx}
-                  className="btn-secondary"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    fontSize: '1rem',
-                    transition: 'all 0.15s',
-                    cursor: selected !== null ? 'default' : 'pointer',
-                    ...getOptionStyle(idx),
-                  }}
-                  onClick={() => handleSelect(idx)}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-
-            {/* ---- RESULT FEEDBACK ---- */}
-            {selected !== null && (
-              <div style={{ marginTop: '1rem' }}>
-                <div className={`speaking-result ${selected === question.correctIndex ? 'correct' : 'wrong'}`}>
-                  {selected === question.correctIndex
-                    ? '✅ ถูกต้อง!'
-                    : `❌ ผิด — คำตอบที่ถูก: ${question.options[question.correctIndex]}`}
-                </div>
-                <p style={{ fontSize: '0.85rem', color: '#888', marginTop: '0.4rem' }}>
-                  {question.word} ({question.reading})
-                </p>
-                <button
-                  className="btn-primary quiz-next-btn"
-                  onClick={handleNext}
-                >
-                  {currentIdx + 1 < questions.length ? 'ถัดไป →' : 'ดูผลลัพธ์'}
-                </button>
-              </div>
-            )}
-
           </div>
-        </section>
-      </main>
+          <p style={{ fontSize: '0.9rem', color: 'var(--ls-on-variant)', marginBottom: '1.25rem' }}>
+            เลือกความหมายของคำนี้
+          </p>
+          <button
+            className={`ls-listen-btn pressable${!hasTapped ? ' pulsing' : ''}`}
+            onClick={handleListen}
+          >
+            <span className="material-symbols-outlined">volume_up</span>
+            ฟัง
+          </button>
+        </div>
+
+        {/* ---- ANSWER OPTIONS ---- */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {question.options.map((opt, idx) => (
+            <button
+              key={idx}
+              className={optionClass(idx)}
+              disabled={selected !== null}
+              onClick={() => handleSelect(idx)}
+            >
+              <span className="ls-option-label">{LABELS[idx]}</span>
+              {opt}
+            </button>
+          ))}
+        </div>
+
+        {/* ---- RESULT FEEDBACK ---- */}
+        {selected !== null && (
+          <div>
+            <div className={`ls-feedback ${selected === question.correctIndex ? 'correct' : 'wrong'}`}>
+              {selected === question.correctIndex
+                ? '✅ ถูกต้อง!'
+                : `❌ ผิด — คำตอบที่ถูก: ${question.options[question.correctIndex]}`}
+              <div className="ls-word-reveal">
+                {question.word}{question.reading ? ` (${question.reading})` : ''}
+              </div>
+            </div>
+            <button className="ls-next-btn pressable" onClick={handleNext}>
+              {currentIdx + 1 < questions.length ? 'ถัดไป →' : 'ดูผลลัพธ์'}
+            </button>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
