@@ -7,26 +7,33 @@ import { JLPT_COLORS } from '../constants/jlptLevels';
 import { getDecks, createDeck, deleteDeck } from '../services/deckService';
 import DeckCard from '../components/Deck/DeckCard';
 import CreateDeckModal from '../components/Deck/CreateDeckModal';
+import AppShell from '../components/Layout/AppShell';
 
 // ============================================================
 // DECK PAGE — แสดง deck ทั้งหมดของ JLPT level นั้น
 // ============================================================
 export default function DeckPage() {
   const { level } = useParams();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
 
-  // --- STATE ---
-  const [decks, setDecks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // ============================================================
+  // STATE
+  // ============================================================
+  const [decks, setDecks]       = useState([]);
+  const [loading, setLoading]   = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]       = useState('');
 
-  // --- HOOKS ---
+  // ============================================================
+  // HOOKS
+  // ============================================================
   useEffect(() => {
     fetchDecks();
   }, [level]);
 
-  // --- HANDLERS ---
+  // ============================================================
+  // HANDLERS
+  // ============================================================
   const fetchDecks = async () => {
     setLoading(true);
     setError('');
@@ -55,32 +62,39 @@ export default function DeckPage() {
     }
   };
 
-  // --- RENDER ---
+  // ============================================================
+  // RENDER
+  // ============================================================
   return (
-    <div className="page">
-      <header className="page-header">
-        <button className="btn-back" onClick={() => navigate('/dashboard')}>
-          ← กลับ
-        </button>
-        <h1 style={{ color: JLPT_COLORS[level] }}>JLPT {level}</h1>
-        <button className="btn-primary btn-sm" onClick={() => setShowModal(true)}>
-          + สร้าง Deck
-        </button>
-      </header>
+    <AppShell
+      title={`JLPT ${level}`}
+      onBack={() => navigate('/dashboard')}
+    >
+      <div className="page">
 
-      {error && <p className="error-msg">{error}</p>}
-
-      {loading ? (
-        <p className="loading-text">กำลังโหลด...</p>
-      ) : decks.length === 0 ? (
-        <p className="empty-state">ยังไม่มี deck — กด "+ สร้าง Deck" เพื่อเริ่มต้น</p>
-      ) : (
-        <div className="deck-grid">
-          {decks.map((deck) => (
-            <DeckCard key={deck.id} deck={deck} onDelete={handleDelete} />
-          ))}
+        {/* ---- ADD DECK BUTTON ---- */}
+        <div className="section-header" style={{ marginBottom: 'var(--space-4)' }}>
+          <h2 style={{ color: JLPT_COLORS[level] }}>JLPT {level}</h2>
+          <button className="btn-primary btn-sm" onClick={() => setShowModal(true)}>
+            + สร้าง Deck
+          </button>
         </div>
-      )}
+
+        {error && <p className="error-msg">{error}</p>}
+
+        {loading ? (
+          <p className="loading-text">กำลังโหลด...</p>
+        ) : decks.length === 0 ? (
+          <p className="empty-state">ยังไม่มี deck — กด "+ สร้าง Deck" เพื่อเริ่มต้น</p>
+        ) : (
+          <div className="deck-grid">
+            {decks.map((deck) => (
+              <DeckCard key={deck.id} deck={deck} onDelete={handleDelete} />
+            ))}
+          </div>
+        )}
+
+      </div>
 
       {showModal && (
         <CreateDeckModal
@@ -89,6 +103,6 @@ export default function DeckPage() {
           onCreate={handleCreate}
         />
       )}
-    </div>
+    </AppShell>
   );
 }

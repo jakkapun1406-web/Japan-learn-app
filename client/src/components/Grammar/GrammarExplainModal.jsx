@@ -13,11 +13,6 @@ export default function GrammarExplainModal({ grammarTitle, example, onClose }) 
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState('');
 
-  // ---- HOOKS ---
-  useEffect(() => {
-    fetchExplanation();
-  }, []);
-
   // ---- HANDLERS ---
   const fetchExplanation = async () => {
     setLoading(true);
@@ -36,6 +31,11 @@ export default function GrammarExplainModal({ grammarTitle, example, onClose }) 
       setLoading(false);
     }
   };
+
+  // ---- HOOKS ---
+  useEffect(() => {
+    fetchExplanation();
+  }, []);
 
   // ---- RENDER ---
   return (

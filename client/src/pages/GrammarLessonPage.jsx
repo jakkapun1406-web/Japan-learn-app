@@ -7,36 +7,46 @@ import { getLessonById } from '../services/grammarService';
 import { JLPT_COLORS } from '../constants/jlptLevels';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import GrammarExplainModal from '../components/Grammar/GrammarExplainModal';
+import AppShell from '../components/Layout/AppShell';
 
 // ============================================================
 // GRAMMAR LESSON PAGE — lesson detail + mini-quiz
 // ============================================================
 export default function GrammarLessonPage() {
   const { lessonId } = useParams();
-  const navigate = useNavigate();
+  const navigate     = useNavigate();
 
-  // --- STATE ---
-  const [lesson, setLesson]           = useState(null);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState('');
+  // ============================================================
+  // HOOKS — must all be called before any early returns
+  // ============================================================
+  const { speak } = useTextToSpeech();
 
-  // explain modal state
-  const [explainTarget, setExplainTarget] = useState(null); // null | { japanese, reading, thai }
+  // ============================================================
+  // STATE
+  // ============================================================
+  const [lesson, setLesson]               = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [error, setError]                 = useState('');
+  const [explainTarget, setExplainTarget] = useState(null);
 
   // quiz state
   const [quizStarted, setQuizStarted] = useState(false);
   const [currentQ, setCurrentQ]       = useState(0);
-  const [selected, setSelected]       = useState(null);    // index ที่เลือก
-  const [answered, setAnswered]       = useState(false);   // กดเฉลยแล้ว
+  const [selected, setSelected]       = useState(null);
+  const [answered, setAnswered]       = useState(false);
   const [score, setScore]             = useState(0);
   const [quizDone, setQuizDone]       = useState(false);
 
-  // --- HOOKS ---
+  // ============================================================
+  // HOOKS — data fetching
+  // ============================================================
   useEffect(() => {
     fetchLesson();
   }, [lessonId]);
 
-  // --- HANDLERS ---
+  // ============================================================
+  // HANDLERS
+  // ============================================================
   const fetchLesson = async () => {
     setLoading(true);
     setError('');
@@ -78,20 +88,26 @@ export default function GrammarLessonPage() {
     setQuizDone(false);
   };
 
-  // --- RENDER HELPERS ---
+  // ============================================================
+  // RENDER HELPERS
+  // ============================================================
   const renderQuiz = () => {
     if (!lesson?.quiz?.length) return null;
     const q = lesson.quiz[currentQ];
 
     if (quizDone) {
-      const pct = Math.round((score / lesson.quiz.length) * 100);
+      const pct   = Math.round((score / lesson.quiz.length) * 100);
       const emoji = pct >= 80 ? '🎉' : pct >= 60 ? '👍' : '📚';
       return (
         <div className="quiz-result">
           <p className="quiz-result-emoji">{emoji}</p>
           <p className="quiz-result-score">{score} / {lesson.quiz.length} ข้อ ({pct}%)</p>
           <p className="quiz-result-msg">
-            {pct >= 80 ? 'เยี่ยมมาก! เข้าใจบทเรียนนี้ดีแล้ว' : pct >= 60 ? 'ดีมาก! ลองทบทวนอีกครั้ง' : 'อ่านอีกรอบแล้วลองใหม่นะ'}
+            {pct >= 80
+              ? 'เยี่ยมมาก! เข้าใจบทเรียนนี้ดีแล้ว'
+              : pct >= 60
+              ? 'ดีมาก! ลองทบทวนอีกครั้ง'
+              : 'อ่านอีกรอบแล้วลองใหม่นะ'}
           </p>
           <button className="btn-secondary" onClick={handleRestartQuiz}>
             ลองอีกครั้ง
@@ -109,16 +125,12 @@ export default function GrammarLessonPage() {
             let cls = 'quiz-option';
             if (answered) {
               if (idx === q.answer_index) cls += ' correct';
-              else if (idx === selected) cls += ' wrong';
+              else if (idx === selected)  cls += ' wrong';
             } else if (idx === selected) {
               cls += ' selected';
             }
             return (
-              <button
-                key={idx}
-                className={cls}
-                onClick={() => handleSelectAnswer(idx)}
-              >
+              <button key={idx} className={cls} onClick={() => handleSelectAnswer(idx)}>
                 {opt}
               </button>
             );
@@ -133,98 +145,98 @@ export default function GrammarLessonPage() {
     );
   };
 
-  // --- RENDER ---
+  // ============================================================
+  // RENDER — loading / error states
+  // ============================================================
   if (loading) return <div className="loading">กำลังโหลด...</div>;
-  if (error)   return <div className="dashboard"><p className="error-msg">{error}</p></div>;
+  if (error) {
+    return (
+      <AppShell title="บทเรียน" onBack={() => navigate('/grammar')}>
+        <div className="page">
+          <p className="error-msg">{error}</p>
+        </div>
+      </AppShell>
+    );
+  }
   if (!lesson) return null;
 
-  const accentColor = JLPT_COLORS[lesson.jlpt_level] || '#667eea';
-  const { speak } = useTextToSpeech();
+  // ============================================================
+  // RENDER — lesson content
+  // ============================================================
+  const accentColor = JLPT_COLORS[lesson.jlpt_level] || 'var(--color-primary)';
 
   return (
-    <div className="dashboard">
-      {/* ---- HEADER ---- */}
-      <header className="dashboard-header">
-        <h1>Japanese App</h1>
-        <div className="header-actions">
-          <button onClick={() => navigate('/grammar')} className="btn-secondary">
-            ← บทเรียน
-          </button>
-          <button onClick={() => navigate('/dashboard')} className="btn-secondary">
-            Dashboard
-          </button>
-        </div>
-      </header>
-
-      <main className="dashboard-content">
+    <AppShell
+      title={lesson.title}
+      onBack={() => navigate('/grammar')}
+    >
+      <div className="dashboard">
 
         {/* ---- LESSON HEADER ---- */}
-        <section>
-          <div className="lesson-header">
-            <span
-              className="grammar-lesson-badge"
-              style={{ backgroundColor: accentColor }}
-            >
-              {lesson.jlpt_level}
-            </span>
-            <h2 className="lesson-title">{lesson.title}</h2>
-          </div>
+        <div className="lesson-header">
+          <span
+            className="grammar-lesson-badge"
+            style={{ backgroundColor: accentColor }}
+          >
+            {lesson.jlpt_level}
+          </span>
+          <h2 className="lesson-title">{lesson.title}</h2>
+        </div>
 
-          {/* ---- EXPLANATION ---- */}
+        {/* ---- EXPLANATION ---- */}
+        <div className="lesson-card">
+          <h3 className="lesson-section-label">คำอธิบาย</h3>
+          <p className="lesson-explanation">{lesson.explanation}</p>
+        </div>
+
+        {/* ---- EXAMPLES ---- */}
+        {lesson.examples?.length > 0 && (
           <div className="lesson-card">
-            <h3 className="lesson-section-label">คำอธิบาย</h3>
-            <p className="lesson-explanation">{lesson.explanation}</p>
-          </div>
-
-          {/* ---- EXAMPLES ---- */}
-          {lesson.examples?.length > 0 && (
-            <div className="lesson-card">
-              <h3 className="lesson-section-label">ตัวอย่างประโยค</h3>
-              <div className="examples-list">
-                {lesson.examples.map((ex, i) => (
-                  <div key={i} className="example-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <p className="example-japanese" style={{ margin: 0 }}>{ex.japanese}</p>
-                      <button className="btn-tts" onClick={() => speak(ex.japanese)} title="ฟังเสียง">🔊</button>
-                      <button
-                        className="btn-secondary btn-explain"
-                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}
-                        onClick={() => setExplainTarget(ex)}
-                      >
-                        อธิบายเพิ่มเติม
-                      </button>
-                    </div>
-                    <p className="example-reading">{ex.reading}</p>
-                    <p className="example-thai">{ex.thai}</p>
+            <h3 className="lesson-section-label">ตัวอย่างประโยค</h3>
+            <div className="examples-list">
+              {lesson.examples.map((ex, i) => (
+                <div key={i} className="example-row">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <p className="example-japanese" style={{ margin: 0 }}>{ex.japanese}</p>
+                    <button className="btn-tts" onClick={() => speak(ex.japanese)} title="ฟังเสียง">🔊</button>
+                    <button
+                      className="btn-secondary"
+                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}
+                      onClick={() => setExplainTarget(ex)}
+                    >
+                      อธิบายเพิ่มเติม
+                    </button>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ---- QUIZ ---- */}
-          {lesson.quiz?.length > 0 && (
-            <div className="lesson-card">
-              <h3 className="lesson-section-label">Mini Quiz</h3>
-              {!quizStarted ? (
-                <div className="quiz-start">
-                  <p>{lesson.quiz.length} ข้อ — ทดสอบความเข้าใจบทเรียนนี้</p>
-                  <button
-                    className="btn-primary"
-                    style={{ width: 'auto', marginTop: '1rem' }}
-                    onClick={() => setQuizStarted(true)}
-                  >
-                    เริ่ม Quiz
-                  </button>
+                  <p className="example-reading">{ex.reading}</p>
+                  <p className="example-thai">{ex.thai}</p>
                 </div>
-              ) : (
-                renderQuiz()
-              )}
+              ))}
             </div>
-          )}
-        </section>
+          </div>
+        )}
 
-      </main>
+        {/* ---- QUIZ ---- */}
+        {lesson.quiz?.length > 0 && (
+          <div className="lesson-card">
+            <h3 className="lesson-section-label">Mini Quiz</h3>
+            {!quizStarted ? (
+              <div className="quiz-start">
+                <p>{lesson.quiz.length} ข้อ — ทดสอบความเข้าใจบทเรียนนี้</p>
+                <button
+                  className="btn-primary"
+                  style={{ width: 'auto', marginTop: '1rem' }}
+                  onClick={() => setQuizStarted(true)}
+                >
+                  เริ่ม Quiz
+                </button>
+              </div>
+            ) : (
+              renderQuiz()
+            )}
+          </div>
+        )}
+
+      </div>
 
       {/* ---- EXPLAIN MODAL ---- */}
       {explainTarget && (
@@ -234,7 +246,6 @@ export default function GrammarLessonPage() {
           onClose={() => setExplainTarget(null)}
         />
       )}
-
-    </div>
+    </AppShell>
   );
 }

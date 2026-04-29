@@ -7,27 +7,48 @@ import { useNavigate } from 'react-router-dom';
 import { getDecks, createDeck, deleteDeck, initJlptDecks } from '../services/deckService';
 import DeckCard from '../components/Deck/DeckCard';
 import CreateDeckModal from '../components/Deck/CreateDeckModal';
+import AppShell from '../components/Layout/AppShell';
+import { JLPT_COLORS, JLPT_DESCRIPTIONS } from '../constants/jlptLevels';
+
+// ============================================================
+// JLPT LEVEL TILE — bento grid tile for each JLPT level
+// ============================================================
+function JlptLevelTile({ deck, onClick }) {
+  const color = JLPT_COLORS[deck.jlpt_level] || 'var(--color-primary)';
+  return (
+    <button
+      className="jlpt-tile"
+      style={{ '--tile-color': color }}
+      onClick={onClick}
+    >
+      <span className="jlpt-tile__level">{deck.jlpt_level}</span>
+      <span className="jlpt-tile__desc">
+        {JLPT_DESCRIPTIONS[deck.jlpt_level] || ''}
+      </span>
+      <span className="jlpt-tile__arrow">→</span>
+    </button>
+  );
+}
 
 // ============================================================
 // DASHBOARD PAGE
 // ============================================================
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  // --- STATE ---
-  const [jlptDecks, setJlptDecks]     = useState([]);
-  const [userDecks, setUserDecks]     = useState([]);
+  // ============================================================
+  // STATE
+  // ============================================================
+  const [jlptDecks, setJlptDecks]       = useState([]);
+  const [userDecks, setUserDecks]       = useState([]);
   const [loadingDecks, setLoadingDecks] = useState(true);
-  const [showModal, setShowModal]     = useState(false);
-  const [error, setError]             = useState('');
+  const [showModal, setShowModal]       = useState(false);
+  const [error, setError]               = useState('');
 
-  // --- HOOKS ---
-  useEffect(() => {
-    bootstrap();
-  }, []);
-
-  // --- HANDLERS ---
+  // ============================================================
+  // HANDLERS
+  // ============================================================
 
   // โหลด deck ทั้งหมด แล้ว init JLPT decks ถ้ายังไม่มี
   const bootstrap = async () => {
@@ -36,17 +57,16 @@ export default function DashboardPage() {
     try {
       const all = await getDecks();
       const jlpt = all.filter((d) => d.deck_type === 'jlpt');
-      const user = all.filter((d) => d.deck_type !== 'jlpt');
+      const mine = all.filter((d) => d.deck_type !== 'jlpt');
 
       if (jlpt.length === 0) {
-        // สร้าง JLPT decks ครั้งแรก แล้ว reload
         await initJlptDecks();
         const refreshed = await getDecks();
         setJlptDecks(refreshed.filter((d) => d.deck_type === 'jlpt'));
         setUserDecks(refreshed.filter((d) => d.deck_type !== 'jlpt'));
       } else {
         setJlptDecks(jlpt);
-        setUserDecks(user);
+        setUserDecks(mine);
       }
     } catch (err) {
       setError(err.response?.data?.error || err.message);
@@ -70,61 +90,68 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
+  // ============================================================
+  // HOOKS
+  // ============================================================
+  useEffect(() => {
+    bootstrap();
+  }, []);
 
-  // --- RENDER ---
+  // ============================================================
+  // DERIVED VALUES
+  // ============================================================
+  const displayName = user?.user_metadata?.display_name || user?.email || 'ผู้เรียน';
+
+  // ============================================================
+  // RENDER
+  // ============================================================
   return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <h1>Japanese App</h1>
-        <div className="header-actions">
-          <span>สวัสดี, {user?.user_metadata?.display_name || user?.email}</span>
-          <button onClick={() => navigate('/grammar')} className="btn-secondary">
-            ไวยากรณ์
-          </button>
-          <button onClick={() => navigate('/reading')} className="btn-secondary">
-            การอ่าน
-          </button>
-          <button onClick={() => navigate('/speaking')} className="btn-secondary">
-            การพูด
-          </button>
-          <button onClick={() => navigate('/progress')} className="btn-secondary">
-            สถิติ
-          </button>
-          <button onClick={handleLogout} className="btn-secondary">ออกจากระบบ</button>
+    <AppShell title="Japanese Learning">
+      <div className="dashboard-page">
+
+        {/* ---- HERO CARD ---- */}
+        <div className="hero-card">
+          <div className="hero-card__body">
+            <p className="hero-card__eyebrow">おはようございます</p>
+            <h1 className="hero-card__title">{displayName}</h1>
+            <p className="hero-card__sub">เริ่มทบทวนวันนี้เลย</p>
+          </div>
+          <div className="hero-card__deco" aria-hidden="true">日本語</div>
         </div>
-      </header>
 
-      <main className="dashboard-content">
-
-        {error && <p className="error-msg">{error}</p>}
+        {error && (
+          <div className="dashboard-section">
+            <p className="error-msg">{error}</p>
+          </div>
+        )}
 
         {/* ---- JLPT DECKS ---- */}
-        <section>
+        <div className="dashboard-section">
           <h2>JLPT Decks</h2>
-          <p className="section-subtitle">คลังคำศัพท์มาตรฐาน JLPT พร้อมใช้งาน</p>
+          <p className="section-subtitle">คลังคำศัพท์มาตรฐาน — เลือกระดับที่ต้องการ</p>
 
           {loadingDecks ? (
             <p className="loading-text">กำลังโหลด...</p>
           ) : (
-            <div className="deck-grid">
+            <div className="jlpt-level-grid">
               {jlptDecks
                 .sort((a, b) => a.jlpt_level.localeCompare(b.jlpt_level))
                 .map((deck) => (
-                  <DeckCard key={deck.id} deck={deck} isJlpt onDelete={() => {}} />
+                  <JlptLevelTile
+                    key={deck.id}
+                    deck={deck}
+                    onClick={() => navigate(`/decks/${deck.jlpt_level}`)}
+                  />
                 ))}
             </div>
           )}
-        </section>
+        </div>
 
         {/* ---- MY DECKS ---- */}
-        <section>
+        <div className="dashboard-section">
           <div className="section-header">
             <h2>ห้องเรียนของฉัน</h2>
-            <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <button className="btn-primary btn-sm" onClick={() => setShowModal(true)}>
               + สร้าง Deck
             </button>
           </div>
@@ -136,13 +163,18 @@ export default function DashboardPage() {
           ) : (
             <div className="deck-grid">
               {userDecks.map((deck) => (
-                <DeckCard key={deck.id} deck={deck} isJlpt={false} onDelete={handleDelete} />
+                <DeckCard
+                  key={deck.id}
+                  deck={deck}
+                  isJlpt={false}
+                  onDelete={handleDelete}
+                />
               ))}
             </div>
           )}
-        </section>
+        </div>
 
-      </main>
+      </div>
 
       {showModal && (
         <CreateDeckModal
@@ -150,6 +182,6 @@ export default function DashboardPage() {
           onCreate={handleCreate}
         />
       )}
-    </div>
+    </AppShell>
   );
 }

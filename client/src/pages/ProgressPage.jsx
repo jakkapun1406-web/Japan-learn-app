@@ -3,24 +3,31 @@
 // ============================================================
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { getProgressStats } from '../services/progressService';
 import { JLPT_LEVELS, JLPT_COLORS } from '../constants/jlptLevels';
+import AppShell from '../components/Layout/AppShell';
 
 // ============================================================
 // SUB-COMPONENTS
 // ============================================================
-function StatCard({ label, value, icon, color = '#667eea' }) {
+function StatCard({ label, value, icon, color }) {
   return (
     <div className="progress-stat-card">
       <div className="progress-stat-icon">{icon}</div>
-      <div className="progress-stat-value" style={{ color }}>{value}</div>
+      <div
+        className="progress-stat-value"
+        style={color ? { color } : {}}
+      >
+        {value}
+      </div>
       <div className="progress-stat-label">{label}</div>
     </div>
   );
 }
 
 function ProgressLevelRow({ level, data }) {
-  const pct = data.total > 0 ? Math.round((data.mastered / data.total) * 100) : 0;
+  const pct   = data.total > 0 ? Math.round((data.mastered / data.total) * 100) : 0;
   const color = JLPT_COLORS[level];
 
   return (
@@ -47,18 +54,25 @@ function ProgressLevelRow({ level, data }) {
 // ============================================================
 export default function ProgressPage() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  // ---- STATE ---
+  // ============================================================
+  // STATE
+  // ============================================================
   const [stats, setStats]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
 
-  // ---- HOOKS ---
+  // ============================================================
+  // HOOKS
+  // ============================================================
   useEffect(() => {
     fetchStats();
   }, []);
 
-  // ---- HANDLERS ---
+  // ============================================================
+  // HANDLERS
+  // ============================================================
   const fetchStats = async () => {
     setLoading(true);
     setError('');
@@ -72,53 +86,61 @@ export default function ProgressPage() {
     }
   };
 
-  // ---- RENDER ---
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  // ============================================================
+  // RENDER
+  // ============================================================
   if (loading) return <div className="loading">กำลังโหลด...</div>;
-  if (error)   return <div className="dashboard"><p className="error-msg">{error}</p></div>;
+  if (error) {
+    return (
+      <AppShell title="ความก้าวหน้า">
+        <div className="dashboard">
+          <p className="error-msg">{error}</p>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
-    <div className="dashboard">
+    <AppShell title="ความก้าวหน้า">
+      <div className="dashboard">
 
-      {/* ---- HEADER ---- */}
-      <header className="dashboard-header">
-        <h1>Japanese App</h1>
-        <div className="header-actions">
-          <button onClick={() => navigate('/dashboard')} className="btn-secondary">
-            ← Dashboard
-          </button>
+        <h2 style={{ marginBottom: '0.25rem' }}>สถิติการเรียนรู้</h2>
+        <p className="section-subtitle">ภาพรวมความก้าวหน้าของคุณ</p>
+
+        {/* ---- STATS GRID ---- */}
+        <div className="progress-stats-grid">
+          <StatCard label="คำศัพท์ทั้งหมด"      value={stats.totalCards}    icon="📚" />
+          <StatCard label="เชี่ยวชาญแล้ว"        value={stats.cardsMastered} icon="✅" color="var(--color-secondary)" />
+          <StatCard label="ครบกำหนดวันนี้"        value={stats.cardsDueToday} icon="📅" color="#c07825" />
+          <StatCard label="รีวิวทั้งหมด"          value={stats.totalReviews}  icon="🔄" />
+          <StatCard label="Streak (วันติดต่อกัน)" value={`${stats.reviewStreak} วัน`} icon="🔥" color="#c0392b" />
         </div>
-      </header>
 
-      <main className="dashboard-content">
-        <section>
-          <h2 className="section-title">สถิติการเรียนรู้</h2>
-          <p className="section-subtitle">ภาพรวมความก้าวหน้าของคุณ</p>
-
-          {/* ---- STATS GRID ---- */}
-          <div className="progress-stats-grid">
-            <StatCard label="คำศัพท์ทั้งหมด"        value={stats.totalCards}    icon="📚" />
-            <StatCard label="เชี่ยวชาญแล้ว"          value={stats.cardsMastered} icon="✅" color="#43a047" />
-            <StatCard label="ครบกำหนดวันนี้"          value={stats.cardsDueToday} icon="📅" color="#fb8c00" />
-            <StatCard label="รีวิวทั้งหมด"            value={stats.totalReviews}  icon="🔄" />
-            <StatCard label="วันติดต่อกัน (Streak)"   value={`${stats.reviewStreak} วัน`} icon="🔥" color="#e53935" />
+        {/* ---- BY-LEVEL BREAKDOWN ---- */}
+        <div className="lesson-card" style={{ marginTop: '1.5rem' }}>
+          <h3 className="lesson-section-label">ความก้าวหน้าตามระดับ JLPT</h3>
+          <div className="progress-level-list">
+            {JLPT_LEVELS.map((level) => (
+              <ProgressLevelRow
+                key={level}
+                level={level}
+                data={stats.byLevel[level] || { total: 0, mastered: 0 }}
+              />
+            ))}
           </div>
+        </div>
 
-          {/* ---- BY-LEVEL BREAKDOWN ---- */}
-          <div className="lesson-card" style={{ marginTop: '1.5rem' }}>
-            <h3 className="lesson-section-label">ความก้าวหน้าตามระดับ JLPT</h3>
-            <div className="progress-level-list">
-              {JLPT_LEVELS.map((level) => (
-                <ProgressLevelRow
-                  key={level}
-                  level={level}
-                  data={stats.byLevel[level] || { total: 0, mastered: 0 }}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      </main>
+        {/* ---- LOGOUT ---- */}
+        <button className="btn-logout" onClick={handleLogout}>
+          ออกจากระบบ
+        </button>
 
-    </div>
+      </div>
+    </AppShell>
   );
 }

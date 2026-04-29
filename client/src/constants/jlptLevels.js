@@ -4,11 +4,11 @@
 export const JLPT_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 export const JLPT_COLORS = {
-  N5: '#4CAF50',
-  N4: '#2196F3',
-  N3: '#FF9800',
-  N2: '#9C27B0',
-  N1: '#F44336',
+  N5: '#2d9e6e',   // muted teal-green (beginner)
+  N4: '#2d6482',   // sky blue (brand primary)
+  N3: '#c07825',   // warm amber
+  N2: '#6b4fa0',   // soft purple
+  N1: '#c0392b',   // confident red (hardest)
 };
 
 export const JLPT_DESCRIPTIONS = {

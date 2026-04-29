@@ -7,6 +7,7 @@ import { getVocabByDeck, addVocabCard, deleteVocabCard, updateVocabCard } from '
 import VocabCard from '../components/Vocabulary/VocabCard';
 import AddVocabModal from '../components/Vocabulary/AddVocabModal';
 import EditVocabModal from '../components/Vocabulary/EditVocabModal';
+import AppShell from '../components/Layout/AppShell';
 
 // ============================================================
 // VOCAB PAGE — แสดงคำศัพท์ทั้งหมดใน deck
@@ -14,22 +15,28 @@ import EditVocabModal from '../components/Vocabulary/EditVocabModal';
 export default function VocabPage() {
   const { deckId } = useParams();
   const [searchParams] = useSearchParams();
-  const deckLevel = searchParams.get('level'); // เช่น "N5"
-  const navigate = useNavigate();
+  const deckLevel = searchParams.get('level');
+  const navigate  = useNavigate();
 
-  // --- STATE ---
-  const [cards, setCards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  // ============================================================
+  // STATE
+  // ============================================================
+  const [cards, setCards]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [showModal, setShowModal]   = useState(false);
   const [editingCard, setEditingCard] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError]           = useState('');
 
-  // --- HOOKS ---
+  // ============================================================
+  // HOOKS
+  // ============================================================
   useEffect(() => {
     fetchVocab();
   }, [deckId]);
 
-  // --- HANDLERS ---
+  // ============================================================
+  // HANDLERS
+  // ============================================================
   const fetchVocab = async () => {
     setLoading(true);
     setError('');
@@ -68,32 +75,39 @@ export default function VocabPage() {
     }
   };
 
-  // --- RENDER ---
+  // ============================================================
+  // RENDER
+  // ============================================================
   return (
-    <div className="page">
-      <header className="page-header">
-        <button className="btn-back" onClick={() => navigate(-1)}>
-          ← กลับ
-        </button>
-        <h1>คำศัพท์ ({cards.length})</h1>
-        <button className="btn-primary btn-sm" onClick={() => setShowModal(true)}>
-          + เพิ่มคำศัพท์
-        </button>
-      </header>
+    <AppShell
+      title={`คำศัพท์ (${cards.length})`}
+      onBack={() => navigate(-1)}
+    >
+      <div className="page">
 
-      {error && <p className="error-msg">{error}</p>}
-
-      {loading ? (
-        <p className="loading-text">กำลังโหลด...</p>
-      ) : cards.length === 0 ? (
-        <p className="empty-state">ยังไม่มีคำศัพท์ — กด "+ เพิ่มคำศัพท์" เพื่อเริ่มต้น</p>
-      ) : (
-        <div className="vocab-list">
-          {cards.map((card) => (
-            <VocabCard key={card.id} card={card} onDelete={handleDelete} onEdit={handleEdit} />
-          ))}
+        {/* ---- ADD BUTTON ROW ---- */}
+        <div className="section-header" style={{ marginBottom: 'var(--space-4)' }}>
+          <h2>คำศัพท์</h2>
+          <button className="btn-primary btn-sm" onClick={() => setShowModal(true)}>
+            + เพิ่มคำศัพท์
+          </button>
         </div>
-      )}
+
+        {error && <p className="error-msg">{error}</p>}
+
+        {loading ? (
+          <p className="loading-text">กำลังโหลด...</p>
+        ) : cards.length === 0 ? (
+          <p className="empty-state">ยังไม่มีคำศัพท์ — กด "+ เพิ่มคำศัพท์" เพื่อเริ่มต้น</p>
+        ) : (
+          <div className="vocab-list">
+            {cards.map((card) => (
+              <VocabCard key={card.id} card={card} onDelete={handleDelete} onEdit={handleEdit} />
+            ))}
+          </div>
+        )}
+
+      </div>
 
       {showModal && (
         <AddVocabModal
@@ -109,6 +123,6 @@ export default function VocabPage() {
           onSave={handleSave}
         />
       )}
-    </div>
+    </AppShell>
   );
 }

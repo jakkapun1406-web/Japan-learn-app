@@ -6,33 +6,39 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getDueCards, submitReview } from '../services/reviewService';
 import ReviewCard from '../components/Flashcard/ReviewCard';
 import ReviewResult from '../components/Flashcard/ReviewResult';
+import AppShell from '../components/Layout/AppShell';
 
 // ============================================================
 // REVIEW PAGE — lobby เลือก mode แล้วเริ่ม session
 // ============================================================
 export default function ReviewPage() {
   const { deckId } = useParams();
-  const navigate = useNavigate();
+  const navigate   = useNavigate();
 
-  // --- STATE ---
-  const [phase, setPhase] = useState('lobby');   // lobby | session | done
+  // ============================================================
+  // STATE
+  // ============================================================
+  const [phase, setPhase]       = useState('lobby');   // lobby | session | done
   const [dueCards, setDueCards] = useState([]);
   const [allCards, setAllCards] = useState([]);
-  const [cards, setCards] = useState([]);         // การ์ดที่ใช้ใน session จริง
-  const [index, setIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [stats, setStats] = useState({ total: 0, good: 0, hard: 0 });
+  const [cards, setCards]       = useState([]);
+  const [index, setIndex]       = useState(0);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState('');
+  const [stats, setStats]       = useState({ total: 0, good: 0, hard: 0 });
 
-  // --- HOOKS ---
+  // ============================================================
+  // HOOKS
+  // ============================================================
   useEffect(() => {
     fetchCounts();
   }, [deckId]);
 
-  // --- HANDLERS ---
+  // ============================================================
+  // HANDLERS
+  // ============================================================
   const fetchCounts = async () => {
     try {
-      // โหลดทั้งสองแบบพร้อมกันเพื่อแสดงจำนวนใน lobby
       const [due, all] = await Promise.all([
         getDueCards(deckId, 'due'),
         getDueCards(deckId, 'all'),
@@ -74,89 +80,90 @@ export default function ReviewPage() {
     }
   };
 
-  // --- RENDER: loading ---
+  // ============================================================
+  // RENDER — loading
+  // ============================================================
   if (loading) return <div className="loading">กำลังโหลด...</div>;
 
-  // --- RENDER: error ---
+  // ============================================================
+  // RENDER — error
+  // ============================================================
   if (error) {
     return (
-      <div className="page">
-        <header className="page-header">
-          <button className="btn-back" onClick={() => navigate(-1)}>← กลับ</button>
-          <h1>รีวิว</h1>
-          <span />
-        </header>
-        <p className="error-msg">{error}</p>
-      </div>
+      <AppShell title="รีวิว" onBack={() => navigate(-1)}>
+        <div className="page">
+          <p className="error-msg">{error}</p>
+        </div>
+      </AppShell>
     );
   }
 
-  // --- RENDER: lobby ---
+  // ============================================================
+  // RENDER — lobby
+  // ============================================================
   if (phase === 'lobby') {
     return (
-      <div className="page">
-        <header className="page-header">
-          <button className="btn-back" onClick={() => navigate(-1)}>← กลับ</button>
-          <h1>รีวิว</h1>
-          <span />
-        </header>
+      <AppShell title="รีวิว" onBack={() => navigate(-1)}>
+        <div className="page">
+          <div className="review-lobby">
+            <p className="lobby-title">เลือกโหมดรีวิว</p>
 
-        <div className="review-lobby">
-          <p className="lobby-title">เลือกโหมดรีวิว</p>
+            <button
+              className="lobby-option"
+              disabled={dueCards.length === 0}
+              onClick={() => startSession(dueCards)}
+            >
+              <span className="lobby-option-label">รีวิวตามกำหนด</span>
+              <span className="lobby-option-count">
+                {dueCards.length > 0
+                  ? `${dueCards.length} ใบที่ถึงเวลาแล้ว`
+                  : 'ไม่มีการ์ดที่ถึงเวลา'}
+              </span>
+            </button>
 
-          <button
-            className="lobby-option"
-            disabled={dueCards.length === 0}
-            onClick={() => startSession(dueCards)}
-          >
-            <span className="lobby-option-label">รีวิวตามกำหนด</span>
-            <span className="lobby-option-count">
-              {dueCards.length > 0
-                ? `${dueCards.length} ใบที่ถึงเวลาแล้ว`
-                : 'ไม่มีการ์ดที่ถึงเวลา'}
-            </span>
-          </button>
-
-          <button
-            className="lobby-option lobby-option-all"
-            disabled={allCards.length === 0}
-            onClick={() => startSession(allCards)}
-          >
-            <span className="lobby-option-label">รีวิวทั้งหมด</span>
-            <span className="lobby-option-count">
-              {allCards.length > 0
-                ? `${allCards.length} ใบทั้งหมดใน deck`
-                : 'ยังไม่มีคำศัพท์ใน deck'}
-            </span>
-          </button>
+            <button
+              className="lobby-option lobby-option-all"
+              disabled={allCards.length === 0}
+              onClick={() => startSession(allCards)}
+            >
+              <span className="lobby-option-label">รีวิวทั้งหมด</span>
+              <span className="lobby-option-count">
+                {allCards.length > 0
+                  ? `${allCards.length} ใบทั้งหมดใน deck`
+                  : 'ยังไม่มีคำศัพท์ใน deck'}
+              </span>
+            </button>
+          </div>
         </div>
-      </div>
+      </AppShell>
     );
   }
 
-  // --- RENDER: session ---
+  // ============================================================
+  // RENDER — session
+  // ============================================================
   if (phase === 'session') {
     return (
-      <div className="page">
-        <header className="page-header">
-          <button className="btn-back" onClick={() => navigate(-1)}>← กลับ</button>
-          <h1>รีวิว</h1>
-          <span className="review-progress">{index + 1} / {cards.length}</span>
-        </header>
-        <ReviewCard card={cards[index]} onGrade={handleGrade} />
-      </div>
+      <AppShell
+        title="รีวิว"
+        onBack={() => navigate(-1)}
+        rightContent={`${index + 1} / ${cards.length}`}
+      >
+        <div className="page">
+          <ReviewCard card={cards[index]} onGrade={handleGrade} />
+        </div>
+      </AppShell>
     );
   }
 
-  // --- RENDER: done ---
+  // ============================================================
+  // RENDER — done
+  // ============================================================
   return (
-    <div className="page">
-      <header className="page-header">
-        <button className="btn-back" onClick={() => navigate(-1)}>← กลับ</button>
-        <h1>รีวิว</h1>
-        <span />
-      </header>
-      <ReviewResult stats={stats} deckId={deckId} />
-    </div>
+    <AppShell title="รีวิว" onBack={() => navigate(-1)}>
+      <div className="page">
+        <ReviewResult stats={stats} deckId={deckId} />
+      </div>
+    </AppShell>
   );
 }

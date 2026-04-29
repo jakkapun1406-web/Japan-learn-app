@@ -199,6 +199,9 @@ VITE_API_URL=http://localhost:3001
 | GET    | `/api/reading/lesson/:id`         | Yes  | ดึงบทเรียน + quiz characters              |
 | GET    | `/api/progress/stats`             | Yes  | สถิติการเรียนรู้ (streak, mastery, byLevel) |
 | POST   | `/api/ai/grammar-explain`         | Yes  | AI grammar deep-explanation + breakdown   |
+| GET    | `/api/daily-quiz/words`           | Yes  | สุ่ม 50 คำ/วัน จาก jlpt_vocab (phase 13)  |
+| POST   | `/api/daily-quiz/answer`          | Yes  | บันทึกผลตอบ รู้/ไม่รู้ (phase 13)         |
+| GET    | `/api/daily-quiz/status`          | Yes  | สถิติ daily quiz วันนี้ (phase 13)         |
 
 CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production).
 
@@ -231,6 +234,12 @@ CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production
 
 ## Features Planned
 
+- **Daily Vocab Quiz** — Phase 13 (planned): สุ่ม 50 คำ/วัน จากคลัง JLPT, พลิกบัตร + รู้/ไม่รู้, ไม่ซ้ำกันในวันเดียวกัน
+  - New table: `daily_quiz_logs (user_id, word_id, quiz_date, is_correct)`
+  - New routes: `GET /api/daily-quiz/words`, `POST /api/daily-quiz/answer`, `GET /api/daily-quiz/status`
+  - New pages: `DailyQuizPage` (setup) + `DailyQuizSessionPage` (session)
+  - New component: `DailyQuizCard.jsx` (flip card, binary answer)
+  - Nav: add "ทดสอบ" as 5th bottom-nav item
 - Listening practice (audio comprehension)
 - N4–N1 grammar lessons (pending Anthropic API credits)
 
@@ -395,9 +404,9 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- Phase 12 — Vocab Card Edit (2026-04-26)
-  - Removed AI vocab hint system: deleted `VocabHintPanel.jsx`, removed `getVocabHint` from `ai.controller.js` + `ai.routes.js` + `aiService.js`
-  - Added vocab edit: `updateVocabCard` in `vocab.controller.js` + `PUT` route in `vocab.routes.js` + `updateVocabCard()` in `vocabService.js` + new `EditVocabModal.jsx` + ✏️ button in `VocabCard.jsx` + wired in `VocabPage.jsx`
+- Phase 13 — Daily Vocab Quiz (2026-04-29) — planning complete, implementation pending
+  - Plan: 50 คำ/วัน สุ่มจาก jlpt_vocab, พลิกบัตร + รู้/ไม่รู้, ไม่ซ้ำในวันเดียวกัน
+  - Requires: DB migration `006_daily_quiz_logs.sql` → run in Supabase SQL Editor first
 - Live URLs:
   - Frontend: https://japan-learn-app-tbky.vercel.app
   - Backend:  https://japan-learn-app.onrender.com
@@ -406,8 +415,11 @@ Do not mix module systems between client and server.
 
 ## Next Steps
 
-1. Push to remote: `git push` — triggers Vercel + Render redeployments
-2. Verify live app: VocabPage → click ✏️ → edit modal opens pre-filled → save → card updates in place
-3. Top up Anthropic API credits at console.anthropic.com/billing
-4. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
-5. Plan next feature — Listening practice (audio comprehension)
+1. **Phase 13 — Daily Vocab Quiz:**
+   a. Run `006_daily_quiz_logs.sql` migration in Supabase SQL Editor
+   b. Create `server/controllers/dailyQuiz.controller.js` + routes
+   c. Create `client/src/pages/DailyQuizPage.jsx` + `DailyQuizSessionPage.jsx`
+   d. Create `client/src/components/Flashcard/DailyQuizCard.jsx`
+   e. Add routes to `App.jsx` + nav item to `AppShell.jsx`
+2. Top up Anthropic API credits at console.anthropic.com/billing
+3. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
