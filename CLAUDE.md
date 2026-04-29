@@ -31,7 +31,7 @@ japanese-app/
 │       ├── assets/            # Static images (hero.png, etc.)
 │       ├── components/
 │       │   ├── Deck/          # DeckCard.jsx, CreateDeckModal.jsx
-│       │   ├── Flashcard/     # ReviewCard.jsx, ReviewResult.jsx
+│       │   ├── Flashcard/     # ReviewCard.jsx, ReviewResult.jsx, DailyQuizCard.jsx
 │       │   ├── Grammar/       # GrammarExplainModal.jsx
 │       │   └── Vocabulary/    # VocabCard.jsx, AddVocabModal.jsx, EditVocabModal.jsx
 │       ├── constants/
@@ -54,6 +54,8 @@ japanese-app/
 │       │   ├── ReadingLessonPage.jsx  # Reading lesson + character quiz
 │       │   ├── SpeakingPage.jsx       # Speaking practice — level + word count setup
 │       │   ├── SpeakingSessionPage.jsx # Speaking session — mic + TTS + match result
+│       │   ├── DailyQuizPage.jsx      # Daily quiz lobby — level selector + status ring
+│       │   ├── DailyQuizSessionPage.jsx # Daily quiz session — flip cards + รู้/ไม่รู้
 │       │   ├── LoginPage.jsx
 │       │   └── RegisterPage.jsx
 │       ├── services/
@@ -65,7 +67,8 @@ japanese-app/
 │       │   ├── grammarService.js  # getLessons, getLessonById
 │       │   ├── progressService.js # getProgressStats
 │       │   ├── readingService.js  # getKanaLessons, getKanjiLessons, getLessonById
-│       │   └── speakingService.js # getWordsForLevel
+│       │   ├── speakingService.js # getWordsForLevel
+│       │   └── dailyQuizService.js # getDailyQuizWords, submitDailyQuizAnswer, getDailyQuizStatus
 │       ├── utils/
 │       │   └── srsAlgorithm.js    # SM-2 / SRS scheduling logic
 │       ├── App.jsx
@@ -83,7 +86,8 @@ japanese-app/
 │   │   ├── grammar.controller.js    # getLessons, getLessonById
 │   │   ├── progress.controller.js   # getProgressStats — aggregates review_logs + vocab_cards
 │   │   ├── reading.controller.js    # getKanaLessons, getKanjiLessons, getLessonById
-│   │   └── speaking.controller.js   # getWordsForLevel (shuffle + limit)
+│   │   ├── speaking.controller.js   # getWordsForLevel (shuffle + limit)
+│   │   └── dailyQuiz.controller.js  # getWords, submitAnswer, getStatus (uses vocab_cards)
 │   ├── lib/
 │   │   └── supabaseClient.js  # Supabase server-side client
 │   ├── middleware/
@@ -99,13 +103,15 @@ japanese-app/
 │   │   ├── grammar.routes.js        # GET /api/grammar/:level, /api/grammar/lesson/:id
 │   │   ├── progress.routes.js       # GET /api/progress/stats
 │   │   ├── reading.routes.js        # GET /api/reading/kana/:type, /kanji/:level, /lesson/:id
-│   │   └── speaking.routes.js       # GET /api/speaking/words/:level
+│   │   ├── speaking.routes.js       # GET /api/speaking/words/:level
+│   │   └── dailyQuiz.routes.js      # GET /api/daily-quiz/words|status, POST /api/daily-quiz/answer
 │   ├── scripts/
 │   │   ├── 001_create_jlpt_vocab.sql       # Creates jlpt_vocab table
 │   │   ├── 002_vocab_cards_unique_word.sql  # Unique(word, deck_id) constraint
 │   │   ├── 003_add_deck_type.sql            # Adds deck_type col to user_decks
 │   │   ├── 004_grammar_lessons.sql          # Creates grammar_lessons table
 │   │   ├── 005_reading_lessons.sql          # Creates reading_lessons table
+│   │   ├── 006_daily_quiz_logs.sql          # Creates daily_quiz_logs table (phase 13)
 │   │   ├── seedJlptVocab.js                 # Old seed (150 words, deprecated)
 │   │   ├── seedJlptVocabFull.js             # Full seed via JMdict → Claude Haiku
 │   │   ├── seedGrammarLessons.js            # AI seed: 5 lessons × 5 levels via Claude Haiku
@@ -199,9 +205,9 @@ VITE_API_URL=http://localhost:3001
 | GET    | `/api/reading/lesson/:id`         | Yes  | ดึงบทเรียน + quiz characters              |
 | GET    | `/api/progress/stats`             | Yes  | สถิติการเรียนรู้ (streak, mastery, byLevel) |
 | POST   | `/api/ai/grammar-explain`         | Yes  | AI grammar deep-explanation + breakdown   |
-| GET    | `/api/daily-quiz/words`           | Yes  | สุ่ม 50 คำ/วัน จาก jlpt_vocab (phase 13)  |
-| POST   | `/api/daily-quiz/answer`          | Yes  | บันทึกผลตอบ รู้/ไม่รู้ (phase 13)         |
-| GET    | `/api/daily-quiz/status`          | Yes  | สถิติ daily quiz วันนี้ (phase 13)         |
+| GET    | `/api/daily-quiz/words`           | Yes  | สุ่ม 50 คำ/วัน จาก vocab_cards ของ user (phase 13) |
+| POST   | `/api/daily-quiz/answer`          | Yes  | บันทึกผลตอบ รู้/ไม่รู้ (phase 13)                  |
+| GET    | `/api/daily-quiz/status`          | Yes  | สถิติ daily quiz วันนี้ (phase 13)                  |
 
 CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production).
 
@@ -228,18 +234,13 @@ CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production
 | User progress dashboard         | Done — `/progress` page: streak, mastery, byLevel bars ✓                    |
 | AI grammar explanations         | Done — GrammarExplainModal: deeperExplanation, breakdown, mistakes ✓         |
 | Vocab card edit                 | Done — EditVocabModal + PUT /api/decks/:deckId/vocab/:cardId ✓               |
+| Daily Vocab Quiz (Phase 13)     | Done — DailyQuizPage + DailyQuizSessionPage + DailyQuizCard + daily_quiz_logs ✓ (pulls from vocab_cards) |
 | Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete                             |
 
 ---
 
 ## Features Planned
 
-- **Daily Vocab Quiz** — Phase 13 (planned): สุ่ม 50 คำ/วัน จากคลัง JLPT, พลิกบัตร + รู้/ไม่รู้, ไม่ซ้ำกันในวันเดียวกัน
-  - New table: `daily_quiz_logs (user_id, word_id, quiz_date, is_correct)`
-  - New routes: `GET /api/daily-quiz/words`, `POST /api/daily-quiz/answer`, `GET /api/daily-quiz/status`
-  - New pages: `DailyQuizPage` (setup) + `DailyQuizSessionPage` (session)
-  - New component: `DailyQuizCard.jsx` (flip card, binary answer)
-  - Nav: add "ทดสอบ" as 5th bottom-nav item
 - Listening practice (audio comprehension)
 - N4–N1 grammar lessons (pending Anthropic API credits)
 

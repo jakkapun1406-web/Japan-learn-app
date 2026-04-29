@@ -77,6 +77,25 @@ const NAV_TABS = [
     ),
   },
   {
+    id: 'daily-quiz',
+    label: 'ทดสอบ',
+    path: '/daily-quiz',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <rect
+          x="4" y="3" width="16" height="18" rx="2"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <line x1="8" y1="8"  x2="16" y2="8"  stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <line x1="8" y1="16" x2="12" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     id: 'profile',
     label: 'โปรไฟล์',
     path: '/progress',

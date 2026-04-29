@@ -18,6 +18,8 @@ import SpeakingSessionPage from './pages/SpeakingSessionPage';
 import ListeningPage from './pages/ListeningPage';
 import ListeningSessionPage from './pages/ListeningSessionPage';
 import ProgressPage from './pages/ProgressPage';
+import DailyQuizPage from './pages/DailyQuizPage';
+import DailyQuizSessionPage from './pages/DailyQuizSessionPage';
 import './App.css';
 
 // ============================================================
@@ -94,6 +96,14 @@ export default function App() {
         <Route
           path="/progress"
           element={<ProtectedRoute><ProgressPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/daily-quiz"
+          element={<ProtectedRoute><DailyQuizPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/daily-quiz/session"
+          element={<ProtectedRoute><DailyQuizSessionPage /></ProtectedRoute>}
         />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>

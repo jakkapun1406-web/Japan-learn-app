@@ -1820,3 +1820,373 @@ body {
   color: var(--ls-on-variant);
   font-weight: 600;
 }
+
+/* ============================================================
+   DAILY QUIZ — Phase 13
+   Shares ls-* color tokens (same design system)
+   ============================================================ */
+
+/* --- Page shell --- */
+.dq-page {
+  min-height: 100vh;
+  background: var(--ls-bg);
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', sans-serif;
+  color: var(--ls-on-surface);
+  padding-bottom: 2rem;
+}
+.dq-page--with-nav {
+  padding-bottom: calc(var(--bottom-nav-height) + 1rem);
+}
+
+/* --- Sticky header --- */
+.dq-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(247, 249, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--ls-outline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  gap: 0.75rem;
+}
+
+.dq-header-title {
+  font-family: 'Lexend', 'Segoe UI', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ls-on-surface);
+  flex: 1;
+  text-align: center;
+}
+
+.dq-back-btn {
+  background: none;
+  border: none;
+  color: var(--ls-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.dq-back-btn:hover { background: var(--ls-surface-ctr); }
+
+.dq-counter {
+  font-size: 0.85rem;
+  color: var(--ls-on-variant);
+  font-weight: 600;
+}
+
+/* --- Progress bar --- */
+.dq-progress-track {
+  height: 6px;
+  background: var(--ls-surface-ctr);
+  width: 100%;
+}
+.dq-progress-fill {
+  height: 100%;
+  background: var(--ls-secondary);
+  transition: width 0.35s ease;
+}
+
+/* --- Content area --- */
+.dq-content {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* --- Content card --- */
+.dq-card {
+  background: var(--ls-surface);
+  border-radius: 16px;
+  border: 1px solid var(--ls-outline);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+}
+.dq-card--done {
+  border-color: var(--ls-correct);
+  background: linear-gradient(135deg, var(--ls-surface) 70%, var(--ls-correct-bg) 100%);
+}
+
+/* --- Hero section --- */
+.dq-hero {
+  background: linear-gradient(135deg, var(--ls-primary) 0%, #1a7a9e 100%);
+  border-radius: 20px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.dq-hero::before,
+.dq-hero::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  pointer-events: none;
+}
+.dq-hero::before { width: 160px; height: 160px; top: -60px; right: -40px; }
+.dq-hero::after  { width: 100px; height: 100px; bottom: -40px; left: -20px; }
+.dq-hero-icon  { font-size: 2.8rem; margin-bottom: 0.6rem; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2)); position: relative; }
+.dq-hero-title { font-family: 'Lexend', sans-serif; font-size: 1.35rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem; text-shadow: 0 1px 3px rgba(0,0,0,0.15); position: relative; }
+.dq-hero-sub   { font-size: 0.9rem; color: rgba(255,255,255,0.82); margin-top: 0.3rem; position: relative; }
+
+/* --- Level selector --- */
+.dq-level-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.dq-level-chip {
+  padding: 0.45rem 1.15rem;
+  border-radius: 999px;
+  border: 2px solid;
+  background: transparent;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.2s ease,
+              background 0.15s;
+}
+.dq-level-chip--active {
+  color: #fff;
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+}
+.dq-level-chip:not(.dq-level-chip--active):hover {
+  transform: scale(1.04);
+  opacity: 0.85;
+}
+
+/* --- Progress ring --- */
+.dq-ring-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.dq-ring {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: conic-gradient(var(--ls-primary) calc(var(--pct) * 1%), var(--ls-surface-ctr) 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dq-ring-inner {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--ls-surface);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1px;
+}
+.dq-ring-num {
+  font-family: 'Lexend', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--ls-primary);
+  line-height: 1;
+}
+.dq-ring-den  { font-size: 0.72rem; color: var(--ls-on-variant); font-weight: 600; }
+.dq-ring-stats { flex: 1; }
+.dq-ring-label { font-size: 0.82rem; font-weight: 700; color: var(--ls-on-variant); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+.dq-correct-hint { font-size: 0.82rem; color: var(--ls-secondary); margin-top: 0.25rem; }
+
+/* --- Done state --- */
+.dq-done-emoji  { font-size: 3.5rem; text-align: center; margin-bottom: 0.75rem; }
+.dq-done-label  { text-align: center; font-size: 1.15rem; font-weight: 700; color: var(--ls-on-surface); margin-bottom: 0.75rem; }
+.dq-score-row   { display: flex; align-items: baseline; justify-content: center; gap: 0.3rem; margin-bottom: 0.25rem; }
+.dq-score-num   { font-family: 'Lexend', sans-serif; font-size: 3.5rem; font-weight: 700; color: var(--ls-primary); line-height: 1; }
+.dq-score-sep   { font-size: 1.5rem; color: var(--ls-on-variant); }
+.dq-score-total { font-size: 1.5rem; font-weight: 600; color: var(--ls-on-variant); }
+.dq-score-pct   { text-align: center; font-size: 1.05rem; font-weight: 700; color: var(--ls-primary); margin-bottom: 0.25rem; }
+.dq-score-msg   { text-align: center; font-size: 0.95rem; color: var(--ls-on-variant); margin-bottom: 0.25rem; }
+.dq-done-hint   { text-align: center; font-size: 0.82rem; color: var(--ls-on-variant); margin-top: 0.75rem; }
+
+/* --- Start / action button --- */
+.dq-start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  background: linear-gradient(135deg, var(--ls-primary) 0%, #1a7a9e 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-family: 'Lexend', 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.85rem 2rem;
+  width: 100%;
+  margin-top: 0;
+  box-shadow: 0 4px 16px rgba(45, 100, 130, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.dq-start-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(45, 100, 130, 0.42);
+}
+.dq-start-btn .material-symbols-outlined { font-size: 1.3rem; }
+
+/* --- Loading text --- */
+.dq-loading-text {
+  font-size: 0.95rem;
+  color: var(--ls-on-variant);
+}
+
+/* ============================================================
+   DAILY QUIZ FLASHCARD
+   ============================================================ */
+.dq-card-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.dq-flashcard {
+  width: 100%;
+  max-width: 480px;
+  min-height: 240px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--ls-primary) 6%, var(--ls-surface)) 0%, var(--ls-surface) 60%);
+  border: 1px solid var(--ls-outline);
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  transition: transform 0.15s, box-shadow 0.15s;
+  user-select: none;
+  position: relative;
+}
+.dq-flashcard:hover:not(.is-flipped) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+}
+.dq-flashcard.is-flipped { cursor: default; }
+
+.dq-face { text-align: center; width: 100%; }
+
+.dq-level-badge {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ls-primary);
+  background: color-mix(in srgb, var(--ls-primary) 12%, transparent);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  letter-spacing: 0.04em;
+}
+
+@keyframes dq-reveal {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.dq-face.dq-back { animation: dq-reveal 0.22s ease-out; }
+
+.dq-word  { font-size: 2.8rem; font-weight: 700; color: var(--ls-on-surface); margin-bottom: 0.5rem; line-height: 1.2; }
+.dq-hint  { font-size: 0.82rem; color: var(--ls-outline); margin-top: 0.75rem; }
+
+.dq-reading {
+  font-size: 1.1rem;
+  color: var(--ls-primary);
+  margin-bottom: 0.4rem;
+}
+.dq-meaning {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ls-on-surface);
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+.dq-pos {
+  display: inline-block;
+  font-size: 0.72rem;
+  color: var(--ls-on-variant);
+  background: var(--ls-surface-ctr);
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  margin-top: 0.25rem;
+}
+.dq-tts-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 8px;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+  margin-bottom: 0.5rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.dq-tts-btn:hover { opacity: 1; }
+
+/* --- Know / Don't-know buttons --- */
+.dq-answer-btns {
+  display: flex;
+  gap: 0.85rem;
+  width: 100%;
+  max-width: 480px;
+}
+.dq-answer-btn {
+  flex: 1;
+  padding: 1rem;
+  border-radius: 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', sans-serif;
+  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+}
+.dq-answer-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+}
+.dq-answer-btn--wrong {
+  background: var(--ls-wrong);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 0 #a93226;
+}
+.dq-answer-btn--correct {
+  background: var(--ls-correct);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 0 #1e8449;
+}
+.dq-answer-btn--wrong:active  { box-shadow: 0 2px 0 #a93226 !important; }
+.dq-answer-btn--correct:active { box-shadow: 0 2px 0 #1e8449 !important; }
