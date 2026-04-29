@@ -15,6 +15,8 @@ import ReadingPage from './pages/ReadingPage';
 import ReadingLessonPage from './pages/ReadingLessonPage';
 import SpeakingPage from './pages/SpeakingPage';
 import SpeakingSessionPage from './pages/SpeakingSessionPage';
+import ListeningPage from './pages/ListeningPage';
+import ListeningSessionPage from './pages/ListeningSessionPage';
 import ProgressPage from './pages/ProgressPage';
 import './App.css';
 
@@ -80,6 +82,14 @@ export default function App() {
         <Route
           path="/speaking/session"
           element={<ProtectedRoute><SpeakingSessionPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/listening"
+          element={<ProtectedRoute><ListeningPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/listening/session"
+          element={<ProtectedRoute><ListeningSessionPage /></ProtectedRoute>}
         />
         <Route
           path="/progress"
