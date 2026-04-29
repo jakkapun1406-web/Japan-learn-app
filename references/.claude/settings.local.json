@@ -3,7 +3,9 @@
     "allow": [
       "Bash(node -e ' *)",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s \"https://jlpt-vocab-api.vercel.app/api/words/all?level=4\")",
+      "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\); process.stdin.on\\('end',\\(\\)=>console.log\\('N4 total:', JSON.parse\\(d\\).length\\)\\)\")"
     ]
   }
 }

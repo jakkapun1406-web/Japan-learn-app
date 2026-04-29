@@ -42,7 +42,7 @@ export default function RegisterPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <h1>🇯🇵 Japanese App</h1>
+        <h1>Japanese App</h1>
         <h2>สมัครสมาชิก</h2>
 
         {error && <div className="error-msg">{error}</div>}
