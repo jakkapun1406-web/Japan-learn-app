@@ -49,7 +49,8 @@ japanese-app/
 │       │   ├── ReviewPage.jsx         # SRS flashcard review
 │       │   ├── GrammarPage.jsx        # Lesson browser — tabs N5–N1 + lesson cards
 │       │   ├── GrammarLessonPage.jsx  # Lesson detail + examples + mini-quiz + AI explain
-│       │   ├── ProgressPage.jsx       # User progress stats — streak, mastery, by JLPT level
+│       │   ├── ProgressPage.jsx       # แผนการเรียนประจำวัน — daily checklist per JLPT level
+│       │   ├── ProfilePage.jsx        # โปรไฟล์ผู้ใช้ — avatar, preferred level, stats, logout
 │       │   ├── ReadingPage.jsx        # Kana/Kanji reading module — lesson selector
 │       │   ├── ReadingLessonPage.jsx  # Reading lesson + character quiz
 │       │   ├── SpeakingPage.jsx       # Speaking practice — level + word count setup
@@ -84,7 +85,7 @@ japanese-app/
 │   │   ├── jlptVocab.controller.js
 │   │   ├── jlptDeck.controller.js   # initJlptDecks — auto-create N5–N1 decks
 │   │   ├── grammar.controller.js    # getLessons, getLessonById
-│   │   ├── progress.controller.js   # getProgressStats — aggregates review_logs + vocab_cards
+│   │   ├── progress.controller.js   # getProgressStats — aggregates review_logs + vocab_cards; includes totalStudyDays
 │   │   ├── reading.controller.js    # getKanaLessons, getKanjiLessons, getLessonById
 │   │   ├── speaking.controller.js   # getWordsForLevel (shuffle + limit)
 │   │   └── dailyQuiz.controller.js  # getWords, submitAnswer, getStatus (uses vocab_cards)
@@ -235,6 +236,7 @@ CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production
 | AI grammar explanations         | Done — GrammarExplainModal: deeperExplanation, breakdown, mistakes ✓         |
 | Vocab card edit                 | Done — EditVocabModal + PUT /api/decks/:deckId/vocab/:cardId ✓               |
 | Daily Vocab Quiz (Phase 13)     | Done — DailyQuizPage + DailyQuizSessionPage + DailyQuizCard + daily_quiz_logs ✓ (pulls from vocab_cards) |
+| Profile page (Phase 14)         | Done — ProfilePage: initials avatar, preferred_level (user_metadata), stats, logout ✓ |
 | Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete                             |
 
 ---
@@ -392,6 +394,8 @@ Do not mix module systems between client and server.
 - [x] Phase 12 — Vocab Card Edit: EditVocabModal + `PUT /api/decks/:deckId/vocab/:cardId` + ✏️ button in VocabCard ✓
 - [x] Phase 13 — Daily Vocab Quiz: DailyQuizCard + DailyQuizPage + DailyQuizSessionPage + dailyQuiz controller/routes + `006_daily_quiz_logs.sql` ✓
 - [ ] Migration 006 — run `006_daily_quiz_logs.sql` in Supabase SQL Editor (creates `daily_quiz_logs` table)
+- [x] Phase 14 — Profile Page split: ProfilePage (`/profile`) + ProgressPage pure learning plan + totalStudyDays in progress stats + BottomNavBar profile path → `/profile` ✓
+- [x] Phase 14 bug fix — `DailyQuizPage.jsx` used undefined `VALID_LEVELS` (server-only); replaced with `JLPT_LEVELS` from frontend constants ✓
 
 ---
 
@@ -407,9 +411,14 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- Phase 13 — Daily Vocab Quiz (2026-04-30) — implementation complete ✓
-  - Pulls 50 คำ/วัน จาก `vocab_cards` ของ user (ไม่ใช่ jlpt_vocab)
-  - ⚠️ ต้องรัน `006_daily_quiz_logs.sql` ใน Supabase SQL Editor ก่อน app จะใช้งานได้
+- Phase 14 — Profile Page split (2026-04-30) — complete ✓
+  - `ProfilePage.jsx` (NEW): initials avatar, JLPT preferred_level chip selector (saves to `user_metadata`), streak + totalStudyDays badges, 2×2 score card grid, logout button
+  - `ProgressPage.jsx`: removed logout button — now pure daily checklist
+  - `progress.controller.js`: added `totalStudyDays` (distinct dates from existing logs, 0 extra DB queries)
+  - `BottomNavBar.jsx`: profile tab → `/profile` (was `/progress`)
+  - `App.jsx`: added `/profile` route
+  - `App.css`: added `.prof-*` CSS section (mobile-first, uses `--ls-*` variables)
+  - Bug fix: `DailyQuizPage.jsx` white screen — `VALID_LEVELS` (server-only) → `JLPT_LEVELS` (frontend constant)
 - Live URLs:
   - Frontend: https://japan-learn-app-tbky.vercel.app
   - Backend:  https://japan-learn-app.onrender.com
@@ -418,8 +427,8 @@ Do not mix module systems between client and server.
 
 ## Next Steps
 
-1. **Run DB migration** — open Supabase SQL Editor → run `server/scripts/006_daily_quiz_logs.sql`
-2. **Deploy Phase 13** — push to GitHub → Vercel + Render auto-deploy
+1. **Run DB migration** — open Supabase SQL Editor → run `server/scripts/006_daily_quiz_logs.sql` (if not yet done)
+2. **Deploy** — push to GitHub → Vercel + Render auto-deploy
 3. Top up Anthropic API credits at console.anthropic.com/billing
 4. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
-5. **Phase 14 — Listening Practice** (audio comprehension)
+5. **Phase 15 — Listening Practice** (audio comprehension)

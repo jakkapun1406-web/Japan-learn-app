@@ -2,7 +2,7 @@
 // IMPORTS
 // ============================================================
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getDailyQuizStatus } from '../services/dailyQuizService';
 import BottomNavBar from '../components/Layout/BottomNavBar';
 import { JLPT_LEVELS, JLPT_COLORS } from '../constants/jlptLevels';
@@ -13,14 +13,80 @@ import { JLPT_LEVELS, JLPT_COLORS } from '../constants/jlptLevels';
 const LEVEL_OPTIONS = [{ label: 'ทั้งหมด', value: null }, ...JLPT_LEVELS.map((l) => ({ label: l, value: l }))];
 
 // ============================================================
+// HELPERS
+// ============================================================
+
+// แสดง per-level breakdown rows เมื่อเลือก "ทั้งหมด"
+function ByLevelSection({ byLevel }) {
+  if (!byLevel) return null;
+  return (
+    <div className="dq-bylevel">
+      {JLPT_LEVELS.map((lvl) => {
+        const s      = byLevel[lvl] ?? { answered: 0, correct: 0, total: 0 };
+        const color  = JLPT_COLORS[lvl];
+        const pct    = s.total > 0 ? (s.answered / s.total) * 100 : 0;
+        const isDone = s.total > 0 && s.answered >= s.total;
+        const noVocab = s.total === 0;
+        return (
+          <div key={lvl} className="dq-bylevel-row">
+            {/* level chip */}
+            <span className="dq-bylevel-chip" style={{ background: color }}>
+              {lvl}
+            </span>
+
+            {/* mini progress bar */}
+            <div className="dq-bylevel-bar-wrap">
+              <div
+                className="dq-bylevel-bar-fill"
+                style={{ width: `${pct}%`, background: color }}
+              />
+            </div>
+
+            {/* answered / total */}
+            <span className="dq-bylevel-count">
+              {noVocab ? '─' : `${s.answered}/${s.total}`}
+            </span>
+
+            {/* status text */}
+            <span
+              className="dq-bylevel-info"
+              style={{
+                color: isDone
+                  ? 'var(--ls-correct, #27ae60)'
+                  : noVocab
+                  ? 'var(--ls-outline)'
+                  : s.answered > 0
+                  ? color
+                  : 'var(--ls-outline)',
+              }}
+            >
+              {noVocab
+                ? 'ไม่มีคำ'
+                : isDone
+                ? `✓ ${s.correct} ถูก`
+                : s.answered > 0
+                ? `ถูก ${s.correct}`
+                : '─'}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============================================================
 // DAILY QUIZ PAGE — Lobby: เลือก level + แสดงสถานะวันนี้ + ปุ่มเริ่ม/ทำต่อ
 // ============================================================
 export default function DailyQuizPage() {
-  const navigate = useNavigate();
+  const navigate         = useNavigate();
+  const [searchParams]   = useSearchParams();
 
   // --- STATE ---
-  const [selectedLevel, setSelectedLevel] = useState(null); // null = ทั้งหมด
+  const initLevel = JLPT_LEVELS.includes(searchParams.get('level')) ? searchParams.get('level') : null;
+  const [selectedLevel, setSelectedLevel] = useState(initLevel); // null = ทั้งหมด
   const [status,        setStatus]        = useState({ answered: 0, correct: 0, total: 0 });
+  const [byLevel,       setByLevel]       = useState(null); // per-level breakdown (only when ทั้งหมด)
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState('');
 
@@ -32,6 +98,7 @@ export default function DailyQuizPage() {
       try {
         const data = await getDailyQuizStatus(selectedLevel);
         setStatus(data);
+        setByLevel(data.byLevel ?? null);
       } catch (err) {
         setError(err.response?.data?.error || err.message);
       } finally {
@@ -106,12 +173,26 @@ export default function DailyQuizPage() {
           <div className="dq-card">
             <p className="error-msg">{error}</p>
           </div>
+        ) : total === 0 && !selectedLevel ? (
+          /* ---- NO VOCAB (ทั้งหมด) — อาจมีบาง level แต่รวมกันแล้ว 0 ---- */
+          <div className="dq-card" style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📭</p>
+            <p className="dq-done-label" style={{ marginBottom: '0.5rem' }}>ยังไม่มีคำศัพท์</p>
+            <p className="dq-done-hint">เพิ่มคำศัพท์ในหน้าคำศัพท์ก่อนเริ่มทดสอบ</p>
+            <button
+              className="dq-start-btn pressable"
+              style={{ marginTop: '1.25rem' }}
+              onClick={() => navigate('/dashboard')}
+            >
+              ไปเพิ่มคำศัพท์
+            </button>
+          </div>
         ) : total === 0 ? (
-          /* ---- NO VOCAB ---- */
+          /* ---- NO VOCAB (specific level) ---- */
           <div className="dq-card" style={{ textAlign: 'center' }}>
             <p style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📭</p>
             <p className="dq-done-label" style={{ marginBottom: '0.5rem' }}>
-              {selectedLevel ? `ไม่มีคำศัพท์ระดับ ${selectedLevel}` : 'ยังไม่มีคำศัพท์'}
+              ไม่มีคำศัพท์ระดับ {selectedLevel}
             </p>
             <p className="dq-done-hint">เพิ่มคำศัพท์ในหน้าคำศัพท์ก่อนเริ่มทดสอบ</p>
             <button
@@ -133,6 +214,8 @@ export default function DailyQuizPage() {
               <span className="dq-score-total">{total}</span>
             </div>
             <p className="dq-score-pct">{pct}% ถูกต้อง</p>
+            {/* per-level breakdown เมื่อเลือก ทั้งหมด */}
+            {!selectedLevel && <ByLevelSection byLevel={byLevel} />}
             <p className="dq-done-hint">กลับมาพรุ่งนี้เพื่อทดสอบชุดใหม่</p>
           </div>
         ) : (
@@ -155,6 +238,8 @@ export default function DailyQuizPage() {
                 )}
               </div>
             </div>
+            {/* per-level breakdown เมื่อเลือก ทั้งหมด */}
+            {!selectedLevel && <ByLevelSection byLevel={byLevel} />}
             <button
               className="dq-start-btn pressable"
               onClick={handleStart}

@@ -98,7 +98,7 @@ const NAV_TABS = [
   {
     id: 'profile',
     label: 'โปรไฟล์',
-    path: '/progress',
+    path: '/profile',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path

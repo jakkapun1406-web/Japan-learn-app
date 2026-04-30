@@ -18,6 +18,7 @@ import SpeakingSessionPage from './pages/SpeakingSessionPage';
 import ListeningPage from './pages/ListeningPage';
 import ListeningSessionPage from './pages/ListeningSessionPage';
 import ProgressPage from './pages/ProgressPage';
+import ProfilePage from './pages/ProfilePage';
 import DailyQuizPage from './pages/DailyQuizPage';
 import DailyQuizSessionPage from './pages/DailyQuizSessionPage';
 import './App.css';
@@ -96,6 +97,10 @@ export default function App() {
         <Route
           path="/progress"
           element={<ProtectedRoute><ProgressPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/profile"
+          element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}
         />
         <Route
           path="/daily-quiz"

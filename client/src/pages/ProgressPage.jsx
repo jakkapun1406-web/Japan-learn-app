@@ -3,142 +3,234 @@
 // ============================================================
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import { getProgressStats } from '../services/progressService';
+import { getDailyQuizStatus } from '../services/dailyQuizService';
+import { getLessons } from '../services/grammarService';
 import { JLPT_LEVELS, JLPT_COLORS } from '../constants/jlptLevels';
 import AppShell from '../components/Layout/AppShell';
 
 // ============================================================
-// SUB-COMPONENTS
+// HELPERS
 // ============================================================
-function StatCard({ label, value, icon, color }) {
+function formatThaiDate() {
+  return new Date().toLocaleDateString('th-TH', {
+    weekday: 'long',
+    year:    'numeric',
+    month:   'long',
+    day:     'numeric',
+  });
+}
+
+// ============================================================
+// ACTIVITY ROW — แถวกิจกรรมแต่ละรายการ
+// ============================================================
+function ActivityRow({ title, subtitle, isDone, noTrack, onGo, goLabel, color }) {
+  let statusEl;
+  if (isDone)       statusEl = <span className="lp-status-done">✓</span>;
+  else if (noTrack) statusEl = <span className="lp-status-none">─</span>;
+  else              statusEl = <span className="lp-status-todo">○</span>;
+
   return (
-    <div className="progress-stat-card">
-      <div className="progress-stat-icon">{icon}</div>
-      <div
-        className="progress-stat-value"
-        style={color ? { color } : {}}
-      >
-        {value}
+    <div className="lp-activity-row">
+      <div className="lp-activity-status">{statusEl}</div>
+      <div className="lp-activity-info">
+        <p className="lp-activity-title" style={isDone ? { color: 'var(--color-secondary)' } : {}}>
+          {title}
+        </p>
+        <p className="lp-activity-sub">{subtitle}</p>
       </div>
-      <div className="progress-stat-label">{label}</div>
+      <button
+        className="lp-activity-btn pressable"
+        style={{ borderColor: color, color }}
+        onClick={onGo}
+      >
+        {goLabel || 'ไป'}
+        <span className="material-symbols-outlined" style={{ fontSize: '0.85rem' }}>
+          arrow_forward
+        </span>
+      </button>
     </div>
   );
 }
 
-function ProgressLevelRow({ level, data }) {
-  const pct   = data.total > 0 ? Math.round((data.mastered / data.total) * 100) : 0;
-  const color = JLPT_COLORS[level];
-
-  return (
-    <div className="progress-level-row">
-      <span
-        className="grammar-lesson-badge"
-        style={{ backgroundColor: color, minWidth: '36px', textAlign: 'center' }}
-      >
-        {level}
-      </span>
-      <div className="progress-bar-track">
-        <div
-          className="progress-bar-fill"
-          style={{ width: `${pct}%`, backgroundColor: color }}
-        />
-      </div>
-      <span className="progress-level-count">{data.mastered} / {data.total} คำ</span>
-    </div>
-  );
-}
-
 // ============================================================
-// PROGRESS PAGE — สถิติการเรียนรู้ของผู้ใช้
+// PROGRESS PAGE — แผนการเรียนประจำวัน
 // ============================================================
 export default function ProgressPage() {
-  const navigate = useNavigate();
-  const { logout } = useAuth();
+  const navigate   = useNavigate();
 
   // ============================================================
   // STATE
   // ============================================================
-  const [stats, setStats]     = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [selectedLevel, setSelectedLevel] = useState('N5');
+  const [progressStats, setProgressStats] = useState(null);
+  const [quizStatus,    setQuizStatus]    = useState(null);
+  const [grammarCount,  setGrammarCount]  = useState(null);
+  const [error,         setError]         = useState('');
+  const [levelLoading,  setLevelLoading]  = useState(true);
 
   // ============================================================
   // HOOKS
   // ============================================================
+
+  // ดึง progress stats ครั้งเดียวตอน mount
   useEffect(() => {
-    fetchStats();
+    getProgressStats()
+      .then((s) => setProgressStats(s))
+      .catch((err) => setError(err.response?.data?.error || err.message));
   }, []);
 
-  // ============================================================
-  // HANDLERS
-  // ============================================================
-  const fetchStats = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await getProgressStats();
-      setStats(data);
-    } catch (err) {
-      setError(err.response?.data?.error || err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ดึงข้อมูลเฉพาะ level เมื่อ selectedLevel เปลี่ยน
+  useEffect(() => {
+    let cancelled = false;
+    const fetchLevelData = async () => {
+      setLevelLoading(true);
+      setError('');
+      try {
+        const [quiz, lessons] = await Promise.all([
+          getDailyQuizStatus(selectedLevel),
+          getLessons(selectedLevel),
+        ]);
+        if (!cancelled) {
+          setQuizStatus(quiz);
+          setGrammarCount((lessons ?? []).length);
+        }
+      } catch (err) {
+        if (!cancelled) setError(err.response?.data?.error || err.message);
+      } finally {
+        if (!cancelled) setLevelLoading(false);
+      }
+    };
+    fetchLevelData();
+    return () => { cancelled = true; };
+  }, [selectedLevel]);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
+  // ============================================================
+  // DERIVED
+  // ============================================================
+  const color       = JLPT_COLORS[selectedLevel];
+  const levelStats  = progressStats?.byLevel?.[selectedLevel] ?? { total: 0, mastered: 0, due: 0 };
+  const isInitialLoad = !progressStats || levelLoading;
+
+  // ทดสอบ: done ถ้าตอบครบวันนี้
+  const quizDone = quizStatus && quizStatus.total > 0 && quizStatus.answered >= quizStatus.total;
+
+  // รีวิว: done ถ้าไม่มีการ์ดรอ
+  const reviewDone = progressStats && levelStats.total > 0 && levelStats.due === 0;
+
+  // subtitle ทดสอบ
+  let quizSub = 'ยังไม่ได้ทดสอบวันนี้';
+  if (quizStatus) {
+    if (quizStatus.total === 0) {
+      quizSub = 'ไม่มีคำศัพท์ระดับนี้';
+    } else if (quizDone) {
+      const pct = Math.round((quizStatus.correct / quizStatus.total) * 100);
+      quizSub = `${quizStatus.answered}/${quizStatus.total} · ${pct}% ถูกต้อง`;
+    } else if (quizStatus.answered > 0) {
+      quizSub = `ทำไปแล้ว ${quizStatus.answered}/${quizStatus.total} คำ`;
+    }
+  }
+
+  // subtitle รีวิว
+  let reviewSub = 'กำลังโหลด...';
+  if (progressStats) {
+    if (levelStats.total === 0) {
+      reviewSub = 'ไม่มีคำศัพท์ระดับนี้';
+    } else if (reviewDone) {
+      reviewSub = `ทบทวนครบแล้ว · ${levelStats.mastered}/${levelStats.total} เชี่ยวชาญ`;
+    } else {
+      reviewSub = `${levelStats.due} การ์ดรอรีวิว · ${levelStats.mastered}/${levelStats.total} เชี่ยวชาญ`;
+    }
+  }
 
   // ============================================================
   // RENDER
   // ============================================================
-  if (loading) return <div className="loading">กำลังโหลด...</div>;
-  if (error) {
-    return (
-      <AppShell title="ความก้าวหน้า">
-        <div className="dashboard">
-          <p className="error-msg">{error}</p>
-        </div>
-      </AppShell>
-    );
-  }
-
   return (
-    <AppShell title="ความก้าวหน้า">
-      <div className="dashboard">
+    <AppShell title="แผนการเรียน">
+      <div className="lp-page">
 
-        <h2 style={{ marginBottom: '0.25rem' }}>สถิติการเรียนรู้</h2>
-        <p className="section-subtitle">ภาพรวมความก้าวหน้าของคุณ</p>
+        {/* ---- DATE ---- */}
+        <p className="lp-date">{formatThaiDate()}</p>
 
-        {/* ---- STATS GRID ---- */}
-        <div className="progress-stats-grid">
-          <StatCard label="คำศัพท์ทั้งหมด"      value={stats.totalCards}    icon="📚" />
-          <StatCard label="เชี่ยวชาญแล้ว"        value={stats.cardsMastered} icon="✅" color="var(--color-secondary)" />
-          <StatCard label="ครบกำหนดวันนี้"        value={stats.cardsDueToday} icon="📅" color="#c07825" />
-          <StatCard label="รีวิวทั้งหมด"          value={stats.totalReviews}  icon="🔄" />
-          <StatCard label="Streak (วันติดต่อกัน)" value={`${stats.reviewStreak} วัน`} icon="🔥" color="#c0392b" />
+        {/* ---- LEVEL TABS ---- */}
+        <div className="lp-level-tabs">
+          {JLPT_LEVELS.map((lvl) => {
+            const isActive = selectedLevel === lvl;
+            const c = JLPT_COLORS[lvl];
+            return (
+              <button
+                key={lvl}
+                className={`lp-level-tab${isActive ? ' lp-level-tab--active' : ''}`}
+                style={isActive
+                  ? { background: c, borderColor: c, color: '#fff' }
+                  : { borderColor: c, color: c }}
+                onClick={() => setSelectedLevel(lvl)}
+              >
+                {lvl}
+              </button>
+            );
+          })}
         </div>
 
-        {/* ---- BY-LEVEL BREAKDOWN ---- */}
-        <div className="lesson-card" style={{ marginTop: '1.5rem' }}>
-          <h3 className="lesson-section-label">ความก้าวหน้าตามระดับ JLPT</h3>
-          <div className="progress-level-list">
-            {JLPT_LEVELS.map((level) => (
-              <ProgressLevelRow
-                key={level}
-                level={level}
-                data={stats.byLevel[level] || { total: 0, mastered: 0 }}
-              />
-            ))}
+        {/* ---- ACTIVITY LIST ---- */}
+        {error ? (
+          <p className="error-msg" style={{ margin: '1rem 0' }}>{error}</p>
+        ) : isInitialLoad ? (
+          <div className="lp-loading">กำลังโหลด...</div>
+        ) : (
+          <div className="lp-activity-list">
+
+            {/* ---- ทดสอบประจำวัน ---- */}
+            <ActivityRow
+              title="ทดสอบประจำวัน"
+              subtitle={quizSub}
+              isDone={quizDone}
+              noTrack={false}
+              color={color}
+              goLabel={quizDone ? 'ดูผล' : quizStatus?.answered > 0 ? 'ทำต่อ' : 'เริ่ม'}
+              onGo={() => navigate(`/daily-quiz?level=${selectedLevel}`)}
+            />
+
+            {/* ---- รีวิวคำศัพท์ ---- */}
+            <ActivityRow
+              title="รีวิวคำศัพท์"
+              subtitle={reviewSub}
+              isDone={reviewDone}
+              noTrack={false}
+              color={color}
+              goLabel="ไปรีวิว"
+              onGo={() => navigate('/dashboard')}
+            />
+
+            {/* ---- ไวยากรณ์ ---- */}
+            <ActivityRow
+              title="ไวยากรณ์"
+              subtitle={grammarCount === null
+                ? 'กำลังโหลด...'
+                : grammarCount === 0
+                ? `ยังไม่มีบทเรียน ${selectedLevel}`
+                : `${grammarCount} บทเรียน ${selectedLevel}`}
+              isDone={false}
+              noTrack={true}
+              color={color}
+              goLabel="ไปเรียน"
+              onGo={() => navigate('/grammar')}
+            />
+
+            {/* ---- ฝึกออกเสียง ---- */}
+            <ActivityRow
+              title="ฝึกออกเสียง"
+              subtitle={`ฝึกพูดคำศัพท์ระดับ ${selectedLevel}`}
+              isDone={false}
+              noTrack={true}
+              color={color}
+              goLabel="ไปฝึก"
+              onGo={() => navigate('/speaking')}
+            />
+
           </div>
-        </div>
-
-        {/* ---- LOGOUT ---- */}
-        <button className="btn-logout" onClick={handleLogout}>
-          ออกจากระบบ
-        </button>
+        )}
 
       </div>
     </AppShell>

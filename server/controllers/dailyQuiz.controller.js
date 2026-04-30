@@ -99,7 +99,7 @@ const submitAnswer = async (req, res) => {
 
 // ============================================================
 // GET STATUS — สถิติประจำวัน + total คำในระดับที่เลือก
-// Query param: ?level=N5  (ถ้าไม่ส่ง = ทั้งหมด)
+// Query param: ?level=N5  (ถ้าไม่ส่ง = ทั้งหมด → returns byLevel too)
 // ============================================================
 const getStatus = async (req, res) => {
   const userId = req.user.id;
@@ -129,31 +129,79 @@ const getStatus = async (req, res) => {
 
     if (logsError) throw logsError;
 
-    if (logs.length === 0) {
-      return res.status(200).json({ answered: 0, correct: 0, total });
+    // --- คำนวณ answered/correct โดยรวม ---
+    let answered = 0;
+    let correct  = 0;
+
+    if (logs.length > 0) {
+      if (level) {
+        // กรองเฉพาะ log ที่เป็น vocab_cards ของ level นั้น
+        const logIds = logs.map((r) => r.word_id);
+        const { data: levelCards } = await supabase
+          .from('vocab_cards')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('jlpt_level', level)
+          .in('id', logIds);
+
+        const levelCardIds = new Set((levelCards ?? []).map((c) => c.id));
+        const levelLogs    = logs.filter((r) => levelCardIds.has(r.word_id));
+
+        answered = levelLogs.length;
+        correct  = levelLogs.filter((r) => r.is_correct).length;
+      } else {
+        answered = logs.length;
+        correct  = logs.filter((r) => r.is_correct).length;
+      }
     }
 
-    // ถ้ากรอง level ให้นับเฉพาะคำในระดับนั้น
-    let answered = logs.length;
-    let correct  = logs.filter((r) => r.is_correct).length;
-
+    // --- specific level: คืนผลทันที ---
     if (level) {
-      const logIds = logs.map((r) => r.word_id);
-      const { data: levelCards } = await supabase
-        .from('vocab_cards')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('jlpt_level', level)
-        .in('id', logIds);
-
-      const levelCardIds = new Set((levelCards ?? []).map((c) => c.id));
-      const levelLogs    = logs.filter((r) => levelCardIds.has(r.word_id));
-
-      answered = levelLogs.length;
-      correct  = levelLogs.filter((r) => r.is_correct).length;
+      return res.status(200).json({ answered, correct, total });
     }
 
-    return res.status(200).json({ answered, correct, total });
+    // --- ทั้งหมด: คำนวณ byLevel breakdown ---
+    // ใช้ per-level queries แทน allCards เพราะ Supabase default limit 1000 rows
+    // จะทำให้ขาดข้อมูลเมื่อ user มี vocab_cards หลายพัน (N5+N4+...=8000+)
+    const logIds = logs.length > 0 ? logs.map((l) => l.word_id) : [];
+
+    const byLevelEntries = await Promise.all(
+      VALID_LEVELS.map(async (lvl) => {
+        // นับ vocab_cards ทั้งหมดของ level นี้
+        const { count: lvlCount } = await supabase
+          .from('vocab_cards')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('jlpt_level', lvl);
+
+        const lvlTotal = Math.min(lvlCount ?? 0, 50);
+
+        if (logIds.length === 0) {
+          return [lvl, { answered: 0, correct: 0, total: lvlTotal }];
+        }
+
+        // หา word_id ที่ตอบวันนี้และเป็น level นี้
+        const { data: lvlCards } = await supabase
+          .from('vocab_cards')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('jlpt_level', lvl)
+          .in('id', logIds);
+
+        const lvlCardIds = new Set((lvlCards ?? []).map((c) => c.id));
+        const lvlLogs    = logs.filter((l) => lvlCardIds.has(l.word_id));
+
+        return [lvl, {
+          answered: lvlLogs.length,
+          correct:  lvlLogs.filter((l) => l.is_correct).length,
+          total:    lvlTotal,
+        }];
+      })
+    );
+
+    const byLevel = Object.fromEntries(byLevelEntries);
+
+    return res.status(200).json({ answered, correct, total, byLevel });
   } catch (err) {
     console.error('[getStatus]', err.message);
     return res.status(500).json({ error: err.message });
