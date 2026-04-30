@@ -390,6 +390,8 @@ Do not mix module systems between client and server.
 - [x] Phase 10 — User Progress Dashboard: `/progress` page, `GET /api/progress/stats`, streak + mastery + byLevel aggregation from existing tables ✓
 - [x] Phase 11 — AI Grammar Explanations: GrammarExplainModal (deeperExplanation/breakdown/commonMistakes) in GrammarLessonPage ✓ (AI vocab hint system removed)
 - [x] Phase 12 — Vocab Card Edit: EditVocabModal + `PUT /api/decks/:deckId/vocab/:cardId` + ✏️ button in VocabCard ✓
+- [x] Phase 13 — Daily Vocab Quiz: DailyQuizCard + DailyQuizPage + DailyQuizSessionPage + dailyQuiz controller/routes + `006_daily_quiz_logs.sql` ✓
+- [ ] Migration 006 — run `006_daily_quiz_logs.sql` in Supabase SQL Editor (creates `daily_quiz_logs` table)
 
 ---
 
@@ -405,9 +407,9 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- Phase 13 — Daily Vocab Quiz (2026-04-29) — planning complete, implementation pending
-  - Plan: 50 คำ/วัน สุ่มจาก jlpt_vocab, พลิกบัตร + รู้/ไม่รู้, ไม่ซ้ำในวันเดียวกัน
-  - Requires: DB migration `006_daily_quiz_logs.sql` → run in Supabase SQL Editor first
+- Phase 13 — Daily Vocab Quiz (2026-04-30) — implementation complete ✓
+  - Pulls 50 คำ/วัน จาก `vocab_cards` ของ user (ไม่ใช่ jlpt_vocab)
+  - ⚠️ ต้องรัน `006_daily_quiz_logs.sql` ใน Supabase SQL Editor ก่อน app จะใช้งานได้
 - Live URLs:
   - Frontend: https://japan-learn-app-tbky.vercel.app
   - Backend:  https://japan-learn-app.onrender.com
@@ -416,11 +418,8 @@ Do not mix module systems between client and server.
 
 ## Next Steps
 
-1. **Phase 13 — Daily Vocab Quiz:**
-   a. Run `006_daily_quiz_logs.sql` migration in Supabase SQL Editor
-   b. Create `server/controllers/dailyQuiz.controller.js` + routes
-   c. Create `client/src/pages/DailyQuizPage.jsx` + `DailyQuizSessionPage.jsx`
-   d. Create `client/src/components/Flashcard/DailyQuizCard.jsx`
-   e. Add routes to `App.jsx` + nav item to `AppShell.jsx`
-2. Top up Anthropic API credits at console.anthropic.com/billing
-3. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
+1. **Run DB migration** — open Supabase SQL Editor → run `server/scripts/006_daily_quiz_logs.sql`
+2. **Deploy Phase 13** — push to GitHub → Vercel + Render auto-deploy
+3. Top up Anthropic API credits at console.anthropic.com/billing
+4. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
+5. **Phase 14 — Listening Practice** (audio comprehension)
