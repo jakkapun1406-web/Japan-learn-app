@@ -30,6 +30,8 @@ export default function ListeningSessionPage() {
   const [done,       setDone]       = useState(false);
   // ซ่อน pulse ring หลังจาก user แตะปุ่มฟังครั้งแรก
   const [hasTapped,  setHasTapped]  = useState(false);
+  // แสดงสถานะกำลังเล่น (blink animation ใน play button)
+  const [playing,    setPlaying]    = useState(false);
 
   // --- GUARD: ไม่มีข้อสอบ → กลับหน้าเลือก (หลัง hooks ทั้งหมด) ---
   if (questions.length === 0) {
@@ -44,7 +46,10 @@ export default function ListeningSessionPage() {
   // ฟังเสียง — เรียกโดยตรงจาก user gesture เพื่อผ่าน mobile browser audio policy
   const handleListen = () => {
     setHasTapped(true);
+    setPlaying(true);
     speak(question.word, 'ja-JP');
+    // SpeechSynthesis ไม่มี onend ที่เชื่อถือได้บน mobile — reset หลัง 2s
+    setTimeout(() => setPlaying(false), 2000);
   };
 
   const handleSelect = (idx) => {
@@ -62,6 +67,9 @@ export default function ListeningSessionPage() {
       speak(questions[next].word, 'ja-JP');
       setCurrentIdx(next);
       setSelected(null);
+      setHasTapped(true);
+      setPlaying(true);
+      setTimeout(() => setPlaying(false), 2000);
     }
   };
 
@@ -71,6 +79,7 @@ export default function ListeningSessionPage() {
     setScore(0);
     setDone(false);
     setHasTapped(false);
+    setPlaying(false);
   };
 
   // --- HELPERS: className ปุ่มตัวเลือก ---
@@ -133,7 +142,7 @@ export default function ListeningSessionPage() {
           เลือกระดับ
         </button>
         <span className="ls-counter">ข้อ {currentIdx + 1} / {questions.length}</span>
-        <span className="ls-level-pill" style={{ backgroundColor: accentColor }}>{level}</span>
+        <div style={{ width: 48 }} />
       </header>
 
       {/* ---- PROGRESS BAR ---- */}
@@ -143,26 +152,52 @@ export default function ListeningSessionPage() {
 
       <div className="ls-content">
 
-        {/* ---- PLAYER CARD ---- */}
-        <div className="ls-card" style={{ textAlign: 'center' }}>
-          <div className="ls-player-icon">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: '2.5rem', fontVariationSettings: "'FILL' 1" }}
-            >
-              headphones
-            </span>
+        {/* ---- PLAYER CARD — gradient dark ---- */}
+        <div style={{
+          background: 'linear-gradient(135deg,#1f4a62,#2d6482)',
+          borderRadius: 18,
+          padding: '24px',
+          marginBottom: 16,
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          {/* decorative circle */}
+          <div style={{
+            position: 'absolute', width: 80, height: 80, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.06)', top: -20, right: -20,
+          }} />
+          {/* speaker icon */}
+          <div style={{ fontSize: '2.2rem', marginBottom: 8, position: 'relative', zIndex: 1 }}>🔊</div>
+          {/* level + instruction */}
+          <div style={{
+            fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)',
+            marginBottom: 16, position: 'relative', zIndex: 1,
+          }}>
+            {level} · เลือกความหมายที่ถูกต้อง
           </div>
-          <p style={{ fontSize: '0.9rem', color: 'var(--ls-on-variant)', marginBottom: '1.25rem' }}>
-            เลือกความหมายของคำนี้
-          </p>
+          {/* play button — blinks until first tap, then blinks while playing */}
           <button
-            className={`ls-listen-btn pressable${!hasTapped ? ' pulsing' : ''}`}
+            className={!hasTapped || playing ? 'listen-playing' : ''}
             onClick={handleListen}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: playing ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)',
+              border: 'none', borderRadius: 999, padding: '10px 22px',
+              color: '#fff', fontFamily: 'Lexend,sans-serif', fontSize: '0.95rem',
+              fontWeight: 600, cursor: 'pointer', position: 'relative', zIndex: 1,
+            }}
           >
-            <span className="material-symbols-outlined">volume_up</span>
-            ฟัง
+            ▶ {playing ? 'กำลังเล่น...' : 'ฟังเสียง'}
           </button>
+        </div>
+
+        {/* ---- QUESTION LABEL ---- */}
+        <div style={{
+          fontFamily: 'Lexend,sans-serif', fontSize: '0.82rem',
+          fontWeight: 700, color: '#0c1d2b', marginBottom: 10,
+        }}>
+          ความหมายคืออะไร?
         </div>
 
         {/* ---- ANSWER OPTIONS ---- */}

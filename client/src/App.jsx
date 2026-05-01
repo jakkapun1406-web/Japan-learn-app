@@ -51,6 +51,10 @@ export default function App() {
           }
         />
         <Route
+          path="/decks"
+          element={<Navigate to="/decks/N5" replace />}
+        />
+        <Route
           path="/decks/:level"
           element={<ProtectedRoute><DeckPage /></ProtectedRoute>}
         />

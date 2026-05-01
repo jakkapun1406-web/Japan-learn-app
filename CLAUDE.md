@@ -44,7 +44,7 @@ japanese-app/
 │       │   └── supabaseClient.js  # Supabase browser client
 │       ├── pages/
 │       │   ├── DashboardPage.jsx      # JLPT + user deck sections + สถิติ nav button
-│       │   ├── DeckPage.jsx           # Deck detail view
+│       │   ├── DeckPage.jsx           # Deck detail view — JLPT level tab bar (N5–N1) + deck list
 │       │   ├── VocabPage.jsx          # Vocab list for a deck
 │       │   ├── ReviewPage.jsx         # SRS flashcard review
 │       │   ├── GrammarPage.jsx        # Lesson browser — tabs N5–N1 + lesson cards
@@ -396,6 +396,12 @@ Do not mix module systems between client and server.
 - [ ] Migration 006 — run `006_daily_quiz_logs.sql` in Supabase SQL Editor (creates `daily_quiz_logs` table)
 - [x] Phase 14 — Profile Page split: ProfilePage (`/profile`) + ProgressPage pure learning plan + totalStudyDays in progress stats + BottomNavBar profile path → `/profile` ✓
 - [x] Phase 14 bug fix — `DailyQuizPage.jsx` used undefined `VALID_LEVELS` (server-only); replaced with `JLPT_LEVELS` from frontend constants ✓
+- [x] Phase 15 v2 — Design polish (from Full Prototype.html v2):
+  - `BottomNavBar.jsx`: tabs 2–4 updated — คำศัพท์→`/decks`, ทดสอบ→`/daily-quiz` (exact active), วันนี้→`/daily-quiz` (never active, quick-start shortcut)
+  - `App.css`: `dash-slideIn` fixed to `translateX(100%)`; 9 new animation classes: `stat-pop`, `page-back`, `result-bounce`, `mic-idle`, `mic-listen`, `listen-playing`, `grade-btn-anim`, `kana-card`, `prog-fill-anim`; `.prof-jlpt-*` CSS added
+  - `ListeningSessionPage.jsx`: gradient dark player card (linear-gradient #1f4a62→#2d6482), `playing` state with 2s timeout reset, `listen-playing` blink animation
+  - `ProfilePage.jsx`: `AnimatedBar` component + `useCountUp` hook (RAF ease-out cubic) + `stat-pop` staggered entrance + JLPT progress bars section
+- [x] DeckPage level tabs — `DeckPage.jsx`: N5–N1 tab bar at top, navigates to `/decks/:level` on click; `App.jsx`: added `/decks` → `/decks/N5` redirect; `BottomNavBar.jsx`: vocab tab path `/decks/N5` → `/decks` ✓
 
 ---
 
@@ -411,14 +417,13 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- Phase 14 — Profile Page split (2026-04-30) — complete ✓
-  - `ProfilePage.jsx` (NEW): initials avatar, JLPT preferred_level chip selector (saves to `user_metadata`), streak + totalStudyDays badges, 2×2 score card grid, logout button
-  - `ProgressPage.jsx`: removed logout button — now pure daily checklist
-  - `progress.controller.js`: added `totalStudyDays` (distinct dates from existing logs, 0 extra DB queries)
-  - `BottomNavBar.jsx`: profile tab → `/profile` (was `/progress`)
-  - `App.jsx`: added `/profile` route
-  - `App.css`: added `.prof-*` CSS section (mobile-first, uses `--ls-*` variables)
-  - Bug fix: `DailyQuizPage.jsx` white screen — `VALID_LEVELS` (server-only) → `JLPT_LEVELS` (frontend constant)
+- DeckPage level tabs (2026-05-01) — complete ✓
+  - `DeckPage.jsx`: added JLPT N5–N1 tab bar; clicking a tab navigates to `/decks/:level`
+  - `App.jsx`: added `/decks` → `/decks/N5` redirect route
+  - `BottomNavBar.jsx`: "คำศัพท์" tab path changed from `/decks/N5` → `/decks`
+  - `App.css`: added `.deck-level-tabs` + `.deck-level-tab` + `.deck-level-tab--active` CSS
+- Phase 15 v2 — Design polish (2026-05-01) — complete ✓
+  - BottomNavBar tabs 2–4, ListeningSessionPage player card, ProfilePage count-up + JLPT bars, App.css animation classes
 - Live URLs:
   - Frontend: https://japan-learn-app-tbky.vercel.app
   - Backend:  https://japan-learn-app.onrender.com
@@ -431,4 +436,3 @@ Do not mix module systems between client and server.
 2. **Deploy** — push to GitHub → Vercel + Render auto-deploy
 3. Top up Anthropic API credits at console.anthropic.com/billing
 4. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
-5. **Phase 15 — Listening Practice** (audio comprehension)

@@ -8,12 +8,14 @@ import { useAuth } from '../../hooks/useAuth';
 // Props:
 //   title       (string)   — center label
 //   onBack      (fn|null)  — if set, shows back-arrow instead of avatar
+//   onMenu      (fn|null)  — if set, shows hamburger ☰ instead of avatar
 //   showBell    (bool)     — shows bell icon on root pages
 //   rightContent (ReactNode) — optional right-side slot (e.g. review counter)
 // ============================================================
 export default function TopAppBar({
   title = 'Japanese Learning',
   onBack = null,
+  onMenu = null,
   showBell = true,
   rightContent = null,
 }) {
@@ -30,9 +32,21 @@ export default function TopAppBar({
   // ============================================================
   return (
     <header className="top-app-bar">
-      {/* LEFT — back button or avatar */}
+      {/* LEFT — hamburger menu, back button, or avatar */}
       <div className="top-app-bar__left">
-        {onBack ? (
+        {onMenu ? (
+          <button
+            className="top-app-bar__back-btn"
+            onClick={onMenu}
+            aria-label="เปิดเมนู"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <line x1="3" y1="6"  x2="21" y2="6"  stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
+        ) : onBack ? (
           <button
             className="top-app-bar__back-btn"
             onClick={onBack}

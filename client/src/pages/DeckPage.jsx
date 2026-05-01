@@ -3,7 +3,7 @@
 // ============================================================
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { JLPT_COLORS } from '../constants/jlptLevels';
+import { JLPT_LEVELS, JLPT_COLORS } from '../constants/jlptLevels';
 import { getDecks, createDeck, deleteDeck } from '../services/deckService';
 import DeckCard from '../components/Deck/DeckCard';
 import CreateDeckModal from '../components/Deck/CreateDeckModal';
@@ -67,10 +67,24 @@ export default function DeckPage() {
   // ============================================================
   return (
     <AppShell
-      title={`JLPT ${level}`}
+      title="คำศัพท์"
       onBack={() => navigate('/dashboard')}
     >
       <div className="page">
+
+        {/* ---- LEVEL TAB BAR ---- */}
+        <div className="deck-level-tabs">
+          {JLPT_LEVELS.map((lv) => (
+            <button
+              key={lv}
+              className={`deck-level-tab${lv === level ? ' deck-level-tab--active' : ''}`}
+              style={lv === level ? { background: JLPT_COLORS[lv], borderColor: JLPT_COLORS[lv] } : { borderColor: JLPT_COLORS[lv], color: JLPT_COLORS[lv] }}
+              onClick={() => navigate(`/decks/${lv}`)}
+            >
+              {lv}
+            </button>
+          ))}
+        </div>
 
         {/* ---- ADD DECK BUTTON ---- */}
         <div className="section-header" style={{ marginBottom: 'var(--space-4)' }}>

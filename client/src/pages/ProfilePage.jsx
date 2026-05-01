@@ -21,6 +21,48 @@ function getInitials(name) {
 }
 
 // ============================================================
+// ANIMATED BAR — JLPT progress bar that animates width on mount
+// ============================================================
+function AnimatedBar({ pct, color, delay = 0 }) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(pct), delay + 80);
+    return () => clearTimeout(t);
+  }, [pct, delay]);
+  return (
+    <div style={{ flex: 1, height: 6, background: '#e3efff', borderRadius: 999, overflow: 'hidden' }}>
+      <div
+        className="prog-fill-anim"
+        style={{ height: '100%', width: `${width}%`, background: color, borderRadius: 999 }}
+      />
+    </div>
+  );
+}
+
+// ============================================================
+// COUNT-UP HOOK — animates a number from 0 to target
+// ============================================================
+function useCountUp(target, duration = 900, delay = 0) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    let start = null;
+    let raf;
+    const t = setTimeout(() => {
+      const step = (ts) => {
+        if (!start) start = ts;
+        const p = Math.min((ts - start) / duration, 1);
+        const e = 1 - Math.pow(1 - p, 3); // ease out cubic
+        setVal(Math.round(e * target));
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    }, delay);
+    return () => { clearTimeout(t); cancelAnimationFrame(raf); };
+  }, [target, duration, delay]);
+  return val;
+}
+
+// ============================================================
 // PROFILE PAGE — โปรไฟล์ผู้ใช้ + สถิติการเรียน
 // ============================================================
 export default function ProfilePage() {
@@ -98,6 +140,12 @@ export default function ProfilePage() {
   const quizCorrect  = quizStatus?.correct ?? 0;
   const quizPct      = quizTotal > 0 ? Math.round((quizCorrect / quizTotal) * 100) : 0;
 
+  // Count-up values — only start counting after stats load (target stays 0 until then)
+  const cStreak    = useCountUp(streak,     900, 100);
+  const cStudyDays = useCountUp(studyDays,  900, 200);
+  const cMastered  = useCountUp(mastered,   900, 300);
+  const cTotal     = useCountUp(totalCards, 900, 150);
+
   // ============================================================
   // RENDER
   // ============================================================
@@ -143,14 +191,14 @@ export default function ProfilePage() {
           <>
             <p className="prof-section-label">สถิติรวม</p>
             <div className="prof-stats-row">
-              <div className="prof-stat-badge">
+              <div className="prof-stat-badge stat-pop" style={{ animationDelay: '0ms' }}>
                 <div className="prof-stat-icon">🔥</div>
-                <div className="prof-stat-value">{streak}</div>
+                <div className="prof-stat-value">{cStreak}</div>
                 <div className="prof-stat-label">วันติดต่อกัน</div>
               </div>
-              <div className="prof-stat-badge">
+              <div className="prof-stat-badge stat-pop" style={{ animationDelay: '80ms' }}>
                 <div className="prof-stat-icon">📅</div>
-                <div className="prof-stat-value">{studyDays}</div>
+                <div className="prof-stat-value">{cStudyDays}</div>
                 <div className="prof-stat-label">วันที่เรียน</div>
               </div>
             </div>
@@ -159,12 +207,12 @@ export default function ProfilePage() {
             <div className="prof-score-grid">
 
               {/* คำศัพท์ */}
-              <div className="prof-score-card">
+              <div className="prof-score-card stat-pop" style={{ animationDelay: '0ms' }}>
                 <span className="prof-score-icon">📚</span>
                 <span className="prof-score-title">คำศัพท์</span>
-                {totalCards > 0 ? (
+                {cTotal > 0 ? (
                   <>
-                    <span className="prof-score-value">{mastered}/{totalCards}</span>
+                    <span className="prof-score-value">{cMastered}/{cTotal}</span>
                     <span className="prof-score-sub">เชี่ยวชาญ {masteryPct}%</span>
                   </>
                 ) : (
@@ -173,7 +221,7 @@ export default function ProfilePage() {
               </div>
 
               {/* ทดสอบประจำวัน */}
-              <div className="prof-score-card">
+              <div className="prof-score-card stat-pop" style={{ animationDelay: '80ms' }}>
                 <span className="prof-score-icon">📝</span>
                 <span className="prof-score-title">ทดสอบวันนี้</span>
                 {quizTotal > 0 ? (
@@ -187,20 +235,47 @@ export default function ProfilePage() {
               </div>
 
               {/* ไวยากรณ์ */}
-              <div className="prof-score-card">
+              <div className="prof-score-card stat-pop" style={{ animationDelay: '160ms' }}>
                 <span className="prof-score-icon">📖</span>
                 <span className="prof-score-title">ไวยากรณ์</span>
                 <span className="prof-score-none">ไม่มีสถิติ</span>
               </div>
 
               {/* ฝึกออกเสียง */}
-              <div className="prof-score-card">
+              <div className="prof-score-card stat-pop" style={{ animationDelay: '240ms' }}>
                 <span className="prof-score-icon">🎤</span>
                 <span className="prof-score-title">ฝึกออกเสียง</span>
                 <span className="prof-score-none">ไม่มีสถิติ</span>
               </div>
 
             </div>
+
+            {/* ---- ความก้าวหน้าตาม JLPT ---- */}
+            {stats?.byLevel && (
+              <>
+                <p className="prof-section-label">ความก้าวหน้าตาม JLPT</p>
+                <div className="prof-jlpt-bars">
+                  {JLPT_LEVELS.map((lv, i) => {
+                    const d   = stats.byLevel[lv];
+                    const pct = d?.total > 0 ? Math.round((d.mastered / d.total) * 100) : 0;
+                    return (
+                      <div key={lv} className="prof-jlpt-row">
+                        <span
+                          className="prof-jlpt-badge"
+                          style={{ background: JLPT_COLORS[lv] }}
+                        >
+                          {lv}
+                        </span>
+                        <div className="prof-jlpt-bar">
+                          <AnimatedBar pct={pct} color={JLPT_COLORS[lv]} delay={i * 100 + 200} />
+                        </div>
+                        <span className="prof-jlpt-pct">{pct}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </>
         )}
 
