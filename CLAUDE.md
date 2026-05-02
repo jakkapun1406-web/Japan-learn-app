@@ -259,6 +259,40 @@ CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production
 7. **Never write code without section comments** explaining each block.
 8. **Commit after every phase** — after testing is complete for each phase, commit all changes to git with a message describing the phase (e.g. `feat: phase 2 — backend API routes`).
 
+### Operational Rules
+
+9. **NO MAGIC — ห้ามเดา**
+   - State all assumptions explicitly before acting.
+   - If infra, file paths, or services are unknown, ask — do not invent them.
+   - Never reference an API, service, or file that hasn't been confirmed to exist.
+   - Format: "I'm assuming X. Is that correct?" before proceeding.
+
+10. **VERIFY BEFORE DONE — ห้ามบอกว่าเสร็จถ้ายังไม่เช็ค**
+    - Never say "done", "fixed", or "should work now" without running verification.
+    - "I edited the file" is not done. "I edited the file and here's the output" is done.
+    - Evidence before assertions — always show command output or observable proof.
+
+11. **DISSENT — ต้องเถียงก่อน commit**
+    - Before any major change, surface concerns:
+      - What's the blast radius if this goes wrong?
+      - What assumptions are we making?
+      - What's the reversibility path?
+      - What are we NOT seeing because of momentum?
+    - A second opinion that pushes back is worth more than one that nods along.
+
+12. **SCOPE DRIFT DETECTION — จับ scope creep**
+    - Track stated goals vs actual execution at all times.
+    - Flag immediately when:
+      - "Just one more thing" accumulates beyond the original ask.
+      - Nice-to-haves are being treated as must-haves.
+      - The ask was "fix bug X" but execution has drifted to "refactor the entire module."
+    - Do not expand scope without explicit approval.
+
+13. **R0 / R1 / R2 — Reversibility tiers**
+    - **R0 (irreversible)** — STOP. Ask before proceeding. Examples: deploy to production, drop a DB table, send external messages.
+    - **R1 (costly to reverse)** — Proceed, but explain the action and reversibility path first. Examples: breaking API changes, major refactors, migration scripts.
+    - **R2 (easily reversed)** — Just do it, no permission needed. Examples: UI color tweaks, adding a log line, editing a comment.
+
 ---
 
 ## Comment Style
