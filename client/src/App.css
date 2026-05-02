@@ -666,6 +666,34 @@ body {
 
 .btn-icon-danger:hover { color: var(--color-error); }
 
+.btn-icon-edit {
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+
+.btn-icon-edit:hover { opacity: 1; }
+
+.deck-name-input {
+  width: 100%;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+  background: var(--color-surface-container);
+  border: 1.5px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.5rem;
+  margin: 0.25rem 0 0.5rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
 .badge-jlpt {
   font-size: 0.65rem;
   font-weight: 700;

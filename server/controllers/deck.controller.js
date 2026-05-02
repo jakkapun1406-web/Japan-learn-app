@@ -94,6 +94,36 @@ const deleteDeck = async (req, res) => {
 };
 
 // ============================================================
+// RENAME DECK — เปลี่ยนชื่อ deck
+// ============================================================
+const renameDeck = async (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+  const userId = req.user.id;
+
+  if (!name?.trim()) {
+    return res.status(400).json({ error: 'Name required' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('user_decks')
+      .update({ name: name.trim() })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error('[renameDeck]', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ============================================================
 // EXPORTS
 // ============================================================
-module.exports = { getDecks, createDeck, deleteDeck };
+module.exports = { getDecks, createDeck, deleteDeck, renameDeck };

@@ -28,6 +28,14 @@ export const deleteDeck = async (deckId) => {
 };
 
 // ============================================================
+// RENAME DECK — เปลี่ยนชื่อ deck
+// ============================================================
+export const renameDeck = async (deckId, name) => {
+  const { data } = await apiClient.patch(`/api/decks/${deckId}`, { name });
+  return data;
+};
+
+// ============================================================
 // INIT JLPT DECKS — สร้าง N5–N1 JLPT decks ถ้ายังไม่มี
 // ============================================================
 export const initJlptDecks = async () => {

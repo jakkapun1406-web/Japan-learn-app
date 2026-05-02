@@ -1,23 +1,63 @@
 // ============================================================
 // IMPORTS
 // ============================================================
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { JLPT_COLORS } from '../../constants/jlptLevels';
 
 // ============================================================
 // DECK CARD — แสดง deck พร้อม actions
-// isJlpt: true = JLPT deck (ไม่มีปุ่มลบ, แสดง badge JLPT)
+// isJlpt: true = JLPT deck (ไม่มีปุ่มลบ/แก้ไข, แสดง badge JLPT)
 // ============================================================
-export default function DeckCard({ deck, onDelete, isJlpt = false }) {
+export default function DeckCard({ deck, onDelete, onRename, isJlpt = false }) {
   const navigate = useNavigate();
 
-  // --- HANDLERS ---
+  // ============================================================
+  // STATE — inline rename
+  // ============================================================
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft]     = useState(deck.name);
+  const inputRef              = useRef(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  // ============================================================
+  // HANDLERS
+  // ============================================================
   const handleDelete = (e) => {
     e.stopPropagation();
     onDelete(deck.id);
   };
 
-  // --- RENDER ---
+  const startEdit = (e) => {
+    e.stopPropagation();
+    setDraft(deck.name);
+    setEditing(true);
+  };
+
+  const saveEdit = () => {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== deck.name) {
+      onRename(deck.id, trimmed);
+    }
+    setEditing(false);
+  };
+
+  const cancelEdit = () => {
+    setDraft(deck.name);
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') saveEdit();
+    if (e.key === 'Escape') cancelEdit();
+  };
+
+  // ============================================================
+  // RENDER
+  // ============================================================
   return (
     <div
       className={`deck-card${isJlpt ? ' jlpt-deck' : ''}`}
@@ -30,12 +70,27 @@ export default function DeckCard({ deck, onDelete, isJlpt = false }) {
           </span>
           {isJlpt && <span className="badge-jlpt">JLPT</span>}
         </div>
-        {!isJlpt && (
-          <button className="btn-icon-danger" onClick={handleDelete} title="ลบ deck">✕</button>
+        {!isJlpt && !editing && (
+          <div style={{ display: 'flex', gap: '0.4rem' }}>
+            <button className="btn-icon-edit" onClick={startEdit} title="แก้ไขชื่อ">✏️</button>
+            <button className="btn-icon-danger" onClick={handleDelete} title="ลบ deck">✕</button>
+          </div>
         )}
       </div>
 
-      <h3 className="deck-name">{deck.name}</h3>
+      {editing ? (
+        <input
+          ref={inputRef}
+          className="deck-name-input"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={saveEdit}
+          maxLength={60}
+        />
+      ) : (
+        <h3 className="deck-name">{deck.name}</h3>
+      )}
 
       <div className="deck-card-actions">
         <button

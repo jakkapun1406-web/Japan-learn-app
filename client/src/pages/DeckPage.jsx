@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { JLPT_LEVELS, JLPT_COLORS } from '../constants/jlptLevels';
-import { getDecks, createDeck, deleteDeck } from '../services/deckService';
+import { getDecks, createDeck, deleteDeck, renameDeck } from '../services/deckService';
 import DeckCard from '../components/Deck/DeckCard';
 import CreateDeckModal from '../components/Deck/CreateDeckModal';
 import AppShell from '../components/Layout/AppShell';
@@ -62,6 +62,15 @@ export default function DeckPage() {
     }
   };
 
+  const handleRename = async (id, newName) => {
+    try {
+      await renameDeck(id, newName);
+      setDecks((prev) => prev.map((d) => d.id === id ? { ...d, name: newName } : d));
+    } catch (err) {
+      setError(err.response?.data?.error || err.message);
+    }
+  };
+
   // ============================================================
   // RENDER
   // ============================================================
@@ -103,7 +112,7 @@ export default function DeckPage() {
         ) : (
           <div className="deck-grid">
             {decks.map((deck) => (
-              <DeckCard key={deck.id} deck={deck} onDelete={handleDelete} />
+              <DeckCard key={deck.id} deck={deck} onDelete={handleDelete} onRename={handleRename} />
             ))}
           </div>
         )}
