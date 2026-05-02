@@ -22,32 +22,27 @@ function formatThaiDate() {
 }
 
 // ============================================================
-// ACTIVITY ROW — แถวกิจกรรมแต่ละรายการ
+// ACTIVITY CARD — การ์ดกิจกรรมแต่ละรายการ (mobile-first vertical layout)
 // ============================================================
 function ActivityRow({ title, subtitle, isDone, noTrack, onGo, goLabel, color }) {
-  let statusEl;
-  if (isDone)       statusEl = <span className="lp-status-done">✓</span>;
-  else if (noTrack) statusEl = <span className="lp-status-none">─</span>;
-  else              statusEl = <span className="lp-status-todo">○</span>;
+  const borderColor = isDone ? 'var(--color-secondary)' : noTrack ? 'var(--color-outline-variant)' : color;
+  const btnBg       = isDone ? 'var(--color-secondary)' : color;
 
   return (
-    <div className="lp-activity-row">
-      <div className="lp-activity-status">{statusEl}</div>
-      <div className="lp-activity-info">
+    <div className="lp-activity-card" style={{ borderLeftColor: borderColor }}>
+      <div className="lp-card-header">
         <p className="lp-activity-title" style={isDone ? { color: 'var(--color-secondary)' } : {}}>
           {title}
         </p>
-        <p className="lp-activity-sub">{subtitle}</p>
+        {isDone && <span className="lp-badge-done">✓ สำเร็จ</span>}
       </div>
+      <p className="lp-activity-sub">{subtitle}</p>
       <button
         className="lp-activity-btn pressable"
-        style={{ borderColor: color, color }}
+        style={{ background: btnBg, color: '#fff' }}
         onClick={onGo}
       >
-        {goLabel || 'ไป'}
-        <span className="material-symbols-outlined" style={{ fontSize: '0.85rem' }}>
-          arrow_forward
-        </span>
+        {goLabel || 'ไป'} →
       </button>
     </div>
   );
@@ -150,8 +145,16 @@ export default function ProgressPage() {
     <AppShell title="แผนการเรียน">
       <div className="lp-page">
 
-        {/* ---- DATE ---- */}
-        <p className="lp-date">{formatThaiDate()}</p>
+        {/* ---- HEADER CARD ---- */}
+        <div className="lp-header" style={{ '--lp-color': color }}>
+          <p className="lp-header-date">{formatThaiDate()}</p>
+          <div className="lp-header-bottom">
+            <p className="lp-header-level">ระดับ {selectedLevel}</p>
+            {progressStats?.streak > 0 && (
+              <span className="lp-streak-chip">🔥 {progressStats.streak} วัน</span>
+            )}
+          </div>
+        </div>
 
         {/* ---- LEVEL TABS ---- */}
         <div className="lp-level-tabs">
@@ -179,7 +182,7 @@ export default function ProgressPage() {
         ) : isInitialLoad ? (
           <div className="lp-loading">กำลังโหลด...</div>
         ) : (
-          <div className="lp-activity-list">
+          <div className="lp-activity-list" style={{ '--lp-color': color }}>
 
             {/* ---- ทดสอบประจำวัน ---- */}
             <ActivityRow

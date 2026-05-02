@@ -2,75 +2,85 @@
 // IMPORTS
 // ============================================================
 import { useState } from 'react';
-import { GRADE_LABELS } from '../../utils/srsAlgorithm';
 import { useTextToSpeech } from '../../hooks/useTextToSpeech';
 
 // ============================================================
-// REVIEW CARD — แสดงการ์ดและปุ่ม grade หลังพลิก
+// REVIEW CARD — 3D flip card + grade buttons after reveal
 // ============================================================
 export default function ReviewCard({ card, onGrade }) {
-  // --- STATE ---
+  // ============================================================
+  // STATE
+  // ============================================================
   const [flipped, setFlipped] = useState(false);
   const { speak } = useTextToSpeech();
 
-  // --- HANDLERS ---
+  // ============================================================
+  // HANDLERS
+  // ============================================================
+  const handleFlip = () => {
+    if (!flipped) setFlipped(true);
+  };
+
   const handleGrade = (grade) => {
     setFlipped(false);
     onGrade(grade);
   };
 
-  // --- RENDER ---
+  // ============================================================
+  // RENDER
+  // ============================================================
   return (
     <div className="review-area">
-      <div
-        className={`review-card ${flipped ? 'is-flipped' : ''}`}
-        onClick={() => !flipped && setFlipped(true)}
-      >
-        {!flipped ? (
-          // FRONT — word เท่านั้น
-          <div className="review-face review-front">
-            <p className="review-word">{card.word}</p>
-            <button
-              className="btn-tts"
-              onClick={(e) => { e.stopPropagation(); speak(card.word); }}
-              title="ฟังเสียง"
-            >
-              🔊
-            </button>
-            <p className="review-hint">แตะเพื่อดูคำตอบ</p>
-          </div>
-        ) : (
-          // BACK — reading + meaning + ชนิดคำ
-          <div className="review-face review-back">
-            <p className="review-word">{card.word}</p>
-            <button
-              className="btn-tts"
-              onClick={(e) => { e.stopPropagation(); speak(card.word); }}
-              title="ฟังเสียง"
-            >
-              🔊
-            </button>
-            <p className="review-reading">{card.reading}</p>
-            <p className="review-meaning">{card.meaning}</p>
-            {card.part_of_speech && (
-              <span className="review-pos">{card.part_of_speech}</span>
-            )}
+      {/* 3D flip scene */}
+      <div className="card-scene" onClick={handleFlip} style={{ cursor: flipped ? 'default' : 'pointer' }}>
+        <div className={`card-inner ${flipped ? 'flipped' : ''}`}>
 
+          {/* FRONT — word only */}
+          <div className="card-face card-face-front">
+            <div className="card-face-front-content">
+              <p className="review-word">{card.word}</p>
+              <button
+                className="btn-tts"
+                onClick={(e) => { e.stopPropagation(); speak(card.word); }}
+                title="ฟังเสียง"
+              >
+                🔊
+              </button>
+              <p className="review-hint">แตะเพื่อดูคำตอบ</p>
+            </div>
           </div>
-        )}
+
+          {/* BACK — reading + meaning + part of speech */}
+          <div className="card-face card-back">
+            <div className="card-face-back-content">
+              <p className="review-word">{card.word}</p>
+              <button
+                className="btn-tts"
+                onClick={(e) => { e.stopPropagation(); speak(card.word); }}
+                title="ฟังเสียง"
+              >
+                🔊
+              </button>
+              <p className="review-reading">{card.reading}</p>
+              <p className="review-meaning">{card.meaning}</p>
+              {card.part_of_speech && (
+                <span className="review-pos">{card.part_of_speech}</span>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
 
+      {/* Grade buttons — visible after flip */}
       {flipped && (
-        <div className="grade-buttons">
-          {[0, 1, 2, 3].map((grade) => (
-            <button
-              key={grade}
-              className={`grade-btn grade-btn-${grade}`}
-              onClick={() => handleGrade(grade)}
-            >
-              {GRADE_LABELS[grade]}
-            </button>
-          ))}
+        <div className="rv-grade-row">
+          <button className="rv-grade-btn rv-grade-no" onClick={() => handleGrade(1)}>
+            ไม่รู้
+          </button>
+          <button className="rv-grade-btn rv-grade-yes" onClick={() => handleGrade(3)}>
+            รู้ ✓
+          </button>
         </div>
       )}
     </div>

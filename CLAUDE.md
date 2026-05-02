@@ -436,6 +436,12 @@ Do not mix module systems between client and server.
   - `ListeningSessionPage.jsx`: gradient dark player card (linear-gradient #1f4a62→#2d6482), `playing` state with 2s timeout reset, `listen-playing` blink animation
   - `ProfilePage.jsx`: `AnimatedBar` component + `useCountUp` hook (RAF ease-out cubic) + `stat-pop` staggered entrance + JLPT progress bars section
 - [x] DeckPage level tabs — `DeckPage.jsx`: N5–N1 tab bar at top, navigates to `/decks/:level` on click; `App.jsx`: added `/decks` → `/decks/N5` redirect; `BottomNavBar.jsx`: vocab tab path `/decks/N5` → `/decks` ✓
+- [x] Phase 16 — ProgressPage + Review redesign (2026-05-02):
+  - `BottomNavBar.jsx`: "วันนี้" tab path changed from `/daily-quiz` → `/progress`; isActive now highlights on `/progress`
+  - `ProgressPage.jsx`: mobile-first redesign — header card (date + level + streak chip), vertical activity cards with left accent border, filled CTA buttons; `.lp-page` max-width + top padding to match other pages
+  - `ReviewPage.jsx`: removed "รีวิวตามกำหนด" mode — lobby now shows stats card (total count + mastered progress bar) + single "เริ่มรีวิว" button; session has inline progress bar replacing header counter
+  - `ReviewCard.jsx`: grade buttons simplified from 4 → 2 (ไม่รู้=grade 1 / รู้ ✓=grade 3)
+  - `App.css`: replaced old `.lobby-*` CSS with new `.rv-*` system (lobby, session bar, 2-button grade row)
 
 ---
 
@@ -451,13 +457,12 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
-- DeckPage level tabs (2026-05-01) — complete ✓
-  - `DeckPage.jsx`: added JLPT N5–N1 tab bar; clicking a tab navigates to `/decks/:level`
-  - `App.jsx`: added `/decks` → `/decks/N5` redirect route
-  - `BottomNavBar.jsx`: "คำศัพท์" tab path changed from `/decks/N5` → `/decks`
-  - `App.css`: added `.deck-level-tabs` + `.deck-level-tab` + `.deck-level-tab--active` CSS
-- Phase 15 v2 — Design polish (2026-05-01) — complete ✓
-  - BottomNavBar tabs 2–4, ListeningSessionPage player card, ProfilePage count-up + JLPT bars, App.css animation classes
+- Phase 16 — ProgressPage + Review redesign (2026-05-02) — complete ✓
+  - `BottomNavBar.jsx`: "วันนี้" tab → `/progress` (was `/daily-quiz`); active highlight fixed
+  - `ProgressPage.jsx`: mobile-first card layout + `.lp-page` sizing aligned to other pages
+  - `ReviewPage.jsx`: single-mode lobby (stats card + mastered bar) + inline session progress bar
+  - `ReviewCard.jsx`: 2-button grade (ไม่รู้ / รู้ ✓) replacing 4-grade system
+  - `App.css`: new `.rv-*` CSS system for review lobby + session + grade buttons
 - Live URLs:
   - Frontend: https://japan-learn-app-tbky.vercel.app
   - Backend:  https://japan-learn-app.onrender.com

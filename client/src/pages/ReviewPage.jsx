@@ -19,7 +19,6 @@ export default function ReviewPage() {
   // STATE
   // ============================================================
   const [phase, setPhase]       = useState('lobby');   // lobby | session | done
-  const [dueCards, setDueCards] = useState([]);
   const [allCards, setAllCards] = useState([]);
   const [cards, setCards]       = useState([]);
   const [index, setIndex]       = useState(0);
@@ -39,11 +38,7 @@ export default function ReviewPage() {
   // ============================================================
   const fetchCounts = async () => {
     try {
-      const [due, all] = await Promise.all([
-        getDueCards(deckId, 'due'),
-        getDueCards(deckId, 'all'),
-      ]);
-      setDueCards(due.cards);
+      const all = await getDueCards(deckId, 'all');
       setAllCards(all.cards);
     } catch (err) {
       setError(err.response?.data?.error || err.message);
@@ -102,36 +97,30 @@ export default function ReviewPage() {
   // RENDER — lobby
   // ============================================================
   if (phase === 'lobby') {
+    const masteredCount = allCards.filter(c => (c.repetitions || 0) >= 2).length;
+    const masteredPct   = allCards.length > 0 ? Math.round((masteredCount / allCards.length) * 100) : 0;
+
     return (
       <AppShell title="รีวิว" onBack={() => navigate(-1)}>
         <div className="page">
-          <div className="review-lobby">
-            <p className="lobby-title">เลือกโหมดรีวิว</p>
+          <div className="rv-lobby">
+            <div className="rv-lobby-icon">📚</div>
+            <p className="rv-lobby-count">{allCards.length}</p>
+            <p className="rv-lobby-label">คำศัพท์ทั้งหมด</p>
+
+            <div className="rv-mastered-wrap">
+              <div className="rv-mastered-bar">
+                <div className="rv-mastered-fill" style={{ width: `${masteredPct}%` }} />
+              </div>
+              <p className="rv-mastered-text">เชี่ยวชาญ {masteredCount}/{allCards.length} · {masteredPct}%</p>
+            </div>
 
             <button
-              className="lobby-option"
-              disabled={dueCards.length === 0}
-              onClick={() => startSession(dueCards)}
-            >
-              <span className="lobby-option-label">รีวิวตามกำหนด</span>
-              <span className="lobby-option-count">
-                {dueCards.length > 0
-                  ? `${dueCards.length} ใบที่ถึงเวลาแล้ว`
-                  : 'ไม่มีการ์ดที่ถึงเวลา'}
-              </span>
-            </button>
-
-            <button
-              className="lobby-option lobby-option-all"
+              className="rv-start-btn pressable"
               disabled={allCards.length === 0}
               onClick={() => startSession(allCards)}
             >
-              <span className="lobby-option-label">รีวิวทั้งหมด</span>
-              <span className="lobby-option-count">
-                {allCards.length > 0
-                  ? `${allCards.length} ใบทั้งหมดใน deck`
-                  : 'ยังไม่มีคำศัพท์ใน deck'}
-              </span>
+              เริ่มรีวิว →
             </button>
           </div>
         </div>
@@ -143,13 +132,16 @@ export default function ReviewPage() {
   // RENDER — session
   // ============================================================
   if (phase === 'session') {
+    const progressPct = Math.round((index / cards.length) * 100);
     return (
-      <AppShell
-        title="รีวิว"
-        onBack={() => navigate(-1)}
-        rightContent={`${index + 1} / ${cards.length}`}
-      >
+      <AppShell title="รีวิว" onBack={() => navigate(-1)}>
         <div className="page">
+          <div className="rv-session-progress">
+            <div className="rv-session-bar">
+              <div className="rv-session-fill" style={{ width: `${progressPct}%` }} />
+            </div>
+            <span className="rv-session-count">{index + 1} / {cards.length}</span>
+          </div>
           <ReviewCard card={cards[index]} onGrade={handleGrade} />
         </div>
       </AppShell>
