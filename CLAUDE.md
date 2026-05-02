@@ -190,6 +190,7 @@ VITE_API_URL=http://localhost:3001
 | GET    | `/api/decks`                      | Yes  | ดึง deck ทั้งหมด (incl. deck_type) |
 | POST   | `/api/decks`                      | Yes  | สร้าง user deck (deck_type='user') |
 | DELETE | `/api/decks/:id`                  | Yes  | ลบ deck                            |
+| PATCH  | `/api/decks/:id`                  | Yes  | เปลี่ยนชื่อ deck (user decks only) |
 | GET    | `/api/decks/:deckId/vocab`        | Yes  | ดึงคำศัพท์ใน deck                  |
 | POST   | `/api/decks/:deckId/vocab`        | Yes  | เพิ่มคำศัพท์ใน deck                |
 | PUT    | `/api/decks/:deckId/vocab/:cardId`| Yes  | แก้ไขคำศัพท์                       |
@@ -235,6 +236,8 @@ CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production
 | User progress dashboard         | Done — `/progress` page: streak, mastery, byLevel bars ✓                    |
 | AI grammar explanations         | Done — GrammarExplainModal: deeperExplanation, breakdown, mistakes ✓         |
 | Vocab card edit                 | Done — EditVocabModal + PUT /api/decks/:deckId/vocab/:cardId ✓               |
+| Deck rename                     | Done — DeckCard inline edit (✏️) + renameDeck service + PATCH /api/decks/:id ✓ |
+| Listening practice              | Done — ListeningPage + ListeningSessionPage + listening controller + Web Speech TTS + 4-choice quiz ✓ |
 | Daily Vocab Quiz (Phase 13)     | Done — DailyQuizPage + DailyQuizSessionPage + DailyQuizCard + daily_quiz_logs ✓ (pulls from vocab_cards) |
 | Profile page (Phase 14)         | Done — ProfilePage: initials avatar, preferred_level (user_metadata), stats, logout ✓ |
 | Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete                             |
@@ -243,7 +246,6 @@ CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production
 
 ## Features Planned
 
-- Listening practice (audio comprehension)
 - N4–N1 grammar lessons (pending Anthropic API credits)
 
 ---
@@ -446,6 +448,8 @@ Do not mix module systems between client and server.
   - `vocab.controller.js`: added pre-check query in `updateVocabCard` (`.neq('id', cardId)`) → returns `409` + Thai message `"คำนี้มีอยู่ใน deck นี้แล้ว"` instead of raw constraint error
   - `vocab.controller.js`: added `err.code === '23505'` catch in `addVocabCard` for same case
   - `references/known-issues.md`: logged as BUG-002 ✓
+- [x] Deck rename — DeckCard inline edit (✏️ button) + `renameDeck` in deckService + PATCH `/api/decks/:id` + renameDeck controller ✓
+- [x] Listening Practice — `ListeningPage.jsx` + `ListeningSessionPage.jsx` + `listening.controller.js` + `listening.routes.js` + `listeningService.js` + App.css `.ls-*` design system + Dashboard tile "ฟังเสียง" → `/listening` ✓
 
 ---
 
@@ -461,6 +465,9 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
+- Phase 17A — CLAUDE.md sync / Navigation audit (2026-05-02) — complete ✓
+  - Confirmed Listening Practice + Deck Rename fully implemented but undocumented
+  - Updated CLAUDE.md: API routes table, Implementation Status, Progress checklist, Features Planned, Next Steps
 - BUG-002 fix — vocab edit duplicate word error (2026-05-02) — complete ✓
   - `vocab.controller.js`: pre-check in `updateVocabCard` + `23505` catch in `addVocabCard`
   - `references/known-issues.md`: BUG-002 logged
@@ -478,7 +485,7 @@ Do not mix module systems between client and server.
 
 ## Next Steps
 
-1. **Run DB migration** — open Supabase SQL Editor → run `server/scripts/006_daily_quiz_logs.sql` (if not yet done)
+1. **Run DB migration** — open Supabase SQL Editor → run `server/scripts/006_daily_quiz_logs.sql` (creates `daily_quiz_logs` table for Daily Quiz feature)
 2. **Deploy** — push to GitHub → Vercel + Render auto-deploy
-3. Top up Anthropic API credits at console.anthropic.com/billing
-4. Seed remaining grammar lessons: `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
+3. **Top up Anthropic API credits** — console.anthropic.com/billing
+4. **Seed N4–N1 grammar lessons** — `cd server && node scripts/seedGrammarLessons.js n4 n3 n2 n1`
