@@ -62,7 +62,10 @@ export default function GrammarPage() {
             <button
               key={level}
               className={`grammar-tab${activeLevel === level ? ' active' : ''}`}
-              style={activeLevel === level ? { borderColor: JLPT_COLORS[level], color: JLPT_COLORS[level] } : {}}
+              style={activeLevel === level
+                ? { background: JLPT_COLORS[level], borderColor: JLPT_COLORS[level], color: '#fff' }
+                : { borderColor: JLPT_COLORS[level], color: JLPT_COLORS[level] }
+              }
               onClick={() => setActiveLevel(level)}
             >
               {level}

@@ -43,6 +43,22 @@
   --color-success-container:      #c6f4d6;
   --color-success:                #1a6e3c;
 
+  /* Primary dark (button 3D press shadow) */
+  --color-primary-dark:           #1f4a62;
+
+  /* JLPT level colors */
+  --color-jlpt-n5:  #2d9e6e;
+  --color-jlpt-n4:  #2d6482;
+  --color-jlpt-n3:  #c07825;
+  --color-jlpt-n2:  #6b4fa0;
+  --color-jlpt-n1:  #c0392b;
+
+  /* Grade colors (flashcard review 0–3) */
+  --color-grade-0:  #c0392b;
+  --color-grade-1:  #d4821a;
+  --color-grade-2:  #32675f;
+  --color-grade-3:  #2d6482;
+
   /* Typography */
   --font-heading: 'Lexend', system-ui, sans-serif;
   --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
@@ -70,9 +86,31 @@
   --shadow-lg:    0 8px 24px rgba(0,0,0,0.12);
   --shadow-modal: 0 20px 60px rgba(0,0,0,0.18);
 
-  /* Navigation heights */
+  /* Layout */
+  --content-max-width: 680px;
   --top-bar-height:    60px;
   --bottom-nav-height: 64px;
+
+  /* Semantic text roles */
+  --text-color-default:   #0c1d2b;
+  --text-color-secondary: #41484d;
+  --text-color-brand:     #2d6482;
+  --text-color-success:   #32675f;
+  --text-color-warning:   #745a2e;
+  --text-color-danger:    #ba1a1a;
+
+  /* Semantic surface roles */
+  --surface-page:     #f7f9ff;
+  --surface-card:     #ffffff;
+  --surface-input:    #f7f9ff;
+  --surface-hover:    #e3efff;
+  --surface-selected: #d9eafe;
+
+  /* Semantic border roles */
+  --border-default:   #c1c7ce;
+  --border-focus:     #2d6482;
+  --border-success:   #32675f;
+  --border-error:     #ba1a1a;
 
   font-family: var(--font-body);
   font-size: 16px;
