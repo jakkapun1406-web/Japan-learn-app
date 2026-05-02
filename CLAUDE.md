@@ -442,6 +442,10 @@ Do not mix module systems between client and server.
   - `ReviewPage.jsx`: removed "รีวิวตามกำหนด" mode — lobby now shows stats card (total count + mastered progress bar) + single "เริ่มรีวิว" button; session has inline progress bar replacing header counter
   - `ReviewCard.jsx`: grade buttons simplified from 4 → 2 (ไม่รู้=grade 1 / รู้ ✓=grade 3)
   - `App.css`: replaced old `.lobby-*` CSS with new `.rv-*` system (lobby, session bar, 2-button grade row)
+- [x] BUG-002 fix — vocab edit duplicate word shows raw Postgres error (2026-05-02):
+  - `vocab.controller.js`: added pre-check query in `updateVocabCard` (`.neq('id', cardId)`) → returns `409` + Thai message `"คำนี้มีอยู่ใน deck นี้แล้ว"` instead of raw constraint error
+  - `vocab.controller.js`: added `err.code === '23505'` catch in `addVocabCard` for same case
+  - `references/known-issues.md`: logged as BUG-002 ✓
 
 ---
 
@@ -457,6 +461,9 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
+- BUG-002 fix — vocab edit duplicate word error (2026-05-02) — complete ✓
+  - `vocab.controller.js`: pre-check in `updateVocabCard` + `23505` catch in `addVocabCard`
+  - `references/known-issues.md`: BUG-002 logged
 - Phase 16 — ProgressPage + Review redesign (2026-05-02) — complete ✓
   - `BottomNavBar.jsx`: "วันนี้" tab → `/progress` (was `/daily-quiz`); active highlight fixed
   - `ProgressPage.jsx`: mobile-first card layout + `.lp-page` sizing aligned to other pages

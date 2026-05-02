@@ -71,6 +71,9 @@ const addVocabCard = async (req, res) => {
     return res.status(201).json({ card: data });
   } catch (err) {
     console.error('[addVocabCard]', err.message);
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'คำนี้มีอยู่ใน deck นี้แล้ว' });
+    }
     return res.status(500).json({ error: err.message });
   }
 };
@@ -114,6 +117,19 @@ const updateVocabCard = async (req, res) => {
   try {
     const owned = await verifyDeckOwner(deckId, userId);
     if (!owned) return res.status(404).json({ error: 'Deck not found' });
+
+    // Check if another card in this deck already uses the same word
+    const { data: conflict } = await supabase
+      .from('vocab_cards')
+      .select('id')
+      .eq('deck_id', deckId)
+      .eq('word', word)
+      .neq('id', cardId)
+      .maybeSingle();
+
+    if (conflict) {
+      return res.status(409).json({ error: 'คำนี้มีอยู่ใน deck นี้แล้ว' });
+    }
 
     const { data, error } = await supabase
       .from('vocab_cards')
