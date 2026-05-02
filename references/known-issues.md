@@ -37,3 +37,20 @@
 - เพิ่ม `err.code === '23505'` catch ใน `addVocabCard` เผื่อกรณีเดียวกันเกิดที่ add
 
 **Status:** Fixed ✓
+
+---
+
+## [BUG-003] masteredCount ใน ReviewPage แสดงค่า 0 เสมอ
+
+**วันที่พบ:** 2026-05-02  
+**ความรุนแรง:** Medium (UX — แถบ progress เชี่ยวชาญแสดงผิด)
+
+**อาการ:** แถบ "เชี่ยวชาญ X/Y" ใน ReviewPage lobby แสดง 0 เสมอ ไม่ว่าจะรีวิวการ์ดไปมากแค่ไหน
+
+**สาเหตุ:** `masteredCount` ใช้ `c.repetitions` ซึ่งเป็น field ระดับบนสุดของ card object แต่ `vocab_cards` table ไม่มี column `repetitions` — ค่านี้อยู่ใน `review_logs` และถูก map มาเป็น `c.review_log.repetitions` โดย `getDueCards` controller
+
+**วิธีแก้:**  
+- `ReviewPage.jsx` line 100: เปลี่ยน `c.repetitions` → `c.review_log?.repetitions`  
+- ปรับ threshold จาก `>= 2` → `>= 3` (rep=3 ≈ interval ~27 วัน = เชี่ยวชาญจริง)
+
+**Status:** Fixed ✓

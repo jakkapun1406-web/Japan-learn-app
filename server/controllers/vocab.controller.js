@@ -60,6 +60,17 @@ const addVocabCard = async (req, res) => {
     const owned = await verifyDeckOwner(deckId, userId);
     if (!owned) return res.status(404).json({ error: 'Deck not found' });
 
+    const { data: conflict } = await supabase
+      .from('vocab_cards')
+      .select('id')
+      .eq('deck_id', deckId)
+      .eq('word', word)
+      .maybeSingle();
+
+    if (conflict) {
+      return res.status(409).json({ error: 'คำนี้มีอยู่ใน deck นี้แล้ว' });
+    }
+
     const { data, error } = await supabase
       .from('vocab_cards')
       .insert({ deck_id: deckId, user_id: userId, word, reading, meaning, part_of_speech, jlpt_level })

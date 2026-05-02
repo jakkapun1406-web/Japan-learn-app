@@ -97,7 +97,7 @@ export default function ReviewPage() {
   // RENDER — lobby
   // ============================================================
   if (phase === 'lobby') {
-    const masteredCount = allCards.filter(c => (c.repetitions || 0) >= 2).length;
+    const masteredCount = allCards.filter(c => (c.review_log?.repetitions || 0) >= 3).length;
     const masteredPct   = allCards.length > 0 ? Math.round((masteredCount / allCards.length) * 100) : 0;
 
     return (

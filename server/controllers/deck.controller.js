@@ -106,6 +106,16 @@ const renameDeck = async (req, res) => {
   }
 
   try {
+    const { data: existing, error: fetchErr } = await supabase
+      .from('user_decks')
+      .select('deck_type')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchErr || !existing) return res.status(404).json({ error: 'Deck not found' });
+    if (existing.deck_type === 'jlpt') return res.status(403).json({ error: 'ไม่สามารถเปลี่ยนชื่อ JLPT deck ได้' });
+
     const { data, error } = await supabase
       .from('user_decks')
       .update({ name: name.trim() })
@@ -116,7 +126,7 @@ const renameDeck = async (req, res) => {
 
     if (error) throw error;
 
-    return res.status(200).json(data);
+    return res.status(200).json({ deck: data });
   } catch (err) {
     console.error('[renameDeck]', err.message);
     return res.status(500).json({ error: err.message });

@@ -450,6 +450,11 @@ Do not mix module systems between client and server.
   - `references/known-issues.md`: logged as BUG-002 ✓
 - [x] Deck rename — DeckCard inline edit (✏️ button) + `renameDeck` in deckService + PATCH `/api/decks/:id` + renameDeck controller ✓
 - [x] Listening Practice — `ListeningPage.jsx` + `ListeningSessionPage.jsx` + `listening.controller.js` + `listening.routes.js` + `listeningService.js` + App.css `.ls-*` design system + Dashboard tile "ฟังเสียง" → `/listening` ✓
+- [x] Code review fixes (2026-05-02) — 4 issues from post-Phase-16 review:
+  - `deck.controller.js`: JLPT rename guard — pre-fetch `deck_type`, return 403 if `'jlpt'` ✓
+  - `deck.controller.js`: `renameDeck` response shape fixed → `{ deck: data }` ✓
+  - `vocab.controller.js`: `addVocabCard` pre-check before insert (consistent with `updateVocabCard`) ✓
+  - `ReviewPage.jsx`: `masteredCount` path fixed `c.repetitions` → `c.review_log?.repetitions`; threshold `>= 2` → `>= 3` ✓
 
 ---
 
@@ -465,6 +470,11 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
+- Code review fixes (2026-05-02) — complete ✓
+  - `deck.controller.js`: JLPT rename guard (403) + response shape `{ deck: data }`
+  - `vocab.controller.js`: `addVocabCard` pre-check before insert
+  - `ReviewPage.jsx`: `masteredCount` path `c.review_log?.repetitions` + threshold `>= 3`
+  - `references/known-issues.md`: logged as BUG-003
 - Phase 17A — CLAUDE.md sync / Navigation audit (2026-05-02) — complete ✓
   - Confirmed Listening Practice + Deck Rename fully implemented but undocumented
   - Updated CLAUDE.md: API routes table, Implementation Status, Progress checklist, Features Planned, Next Steps
