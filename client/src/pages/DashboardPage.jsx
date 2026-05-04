@@ -8,7 +8,7 @@ import { getDecks, initJlptDecks } from '../services/deckService';
 import { getProgressStats } from '../services/progressService';
 import AppShell from '../components/Layout/AppShell';
 import SideDrawer from '../components/Layout/SideDrawer';
-import { JLPT_COLORS } from '../constants/jlptLevels';
+import { JLPT_COLORS, JLPT_LEVELS } from '../constants/jlptLevels';
 
 // ============================================================
 // CONSTANTS — quick access grid tiles
@@ -118,8 +118,6 @@ const GRID_TILES = [
     ),
   },
 ];
-
-const JLPT_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 // ============================================================
 // DASHBOARD PAGE
