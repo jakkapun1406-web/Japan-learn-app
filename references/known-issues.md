@@ -54,3 +54,18 @@
 - ปรับ threshold จาก `>= 2` → `>= 3` (rep=3 ≈ interval ~27 วัน = เชี่ยวชาญจริง)
 
 **Status:** Fixed ✓
+
+---
+
+## [BUG-004] SpeakingSessionPage — early return before hooks violates Rules of Hooks
+
+**วันที่พบ:** 2026-05-04  
+**ความรุนแรง:** Critical (React crash)
+
+**อาการ:** ถ้า `words` เป็น array ว่าง (เช่น user navigate ตรงมาที่ `/speaking/session` โดยไม่ผ่าน SpeakingPage) component จะ crash ด้วย `Uncaught Error: Rendered fewer hooks than expected` เพราะ early return ที่ line 35 ถูก execute ก่อน hooks ทุกตัว
+
+**สาเหตุ:** `if (words.length === 0) return <Navigate />` อยู่ก่อน `useState`, `useRef`, `useEffect`, `useSpeechRecognition`, `useTextToSpeech` — React Rules of Hooks กำหนดว่า hooks ต้องถูก call ในจำนวนและลำดับเดิมทุก render
+
+**วิธีแก้:** ย้าย early return ไปหลัง hook declarations ทุกตัว (`client/src/pages/SpeakingSessionPage.jsx` lines 65–68) ตาม pattern ของ `ListeningSessionPage.jsx`
+
+**Status:** Fixed ✓

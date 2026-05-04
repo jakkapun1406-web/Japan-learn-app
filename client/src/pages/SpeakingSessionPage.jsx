@@ -31,11 +31,6 @@ export default function SpeakingSessionPage() {
   const words = location.state?.words || [];
   const level = location.state?.level || 'N5';
 
-  // Guard: ถ้าไม่มีคำ → กลับหน้าเลือก
-  if (words.length === 0) {
-    return <Navigate to="/speaking" replace />;
-  }
-
   const accentColor = JLPT_COLORS[level] || 'var(--color-primary)';
 
   // ============================================================
@@ -66,6 +61,11 @@ export default function SpeakingSessionPage() {
 
   const { listening, start, stop } = useSpeechRecognition({ onResult: handleResult });
   const { speak } = useTextToSpeech();
+
+  // --- GUARD: ไม่มีคำ → กลับหน้าเลือก (หลัง hooks ทั้งหมด) ---
+  if (words.length === 0) {
+    return <Navigate to="/speaking" replace />;
+  }
 
   // ============================================================
   // HANDLERS
