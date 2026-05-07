@@ -3333,3 +3333,64 @@ body {
 .deck-level-tab--active {
   color: #fff;
 }
+
+/* ============================================================
+   VOCAB PAGE — Search & Filter
+   ============================================================ */
+.vc-search-wrap {
+  margin-bottom: 0.6rem;
+}
+
+.vc-search-input {
+  width: 100%;
+  padding: 0.55rem 0.875rem;
+  border: 1.5px solid var(--color-outline-variant);
+  border-radius: 12px;
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.vc-search-input:focus {
+  border-color: var(--color-primary);
+}
+
+.vc-filter-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+.vc-chip {
+  padding: 0.28rem 0.75rem;
+  border-radius: 20px;
+  border: 1.5px solid var(--color-outline-variant);
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.vc-chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.vc-chip--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* POS chips are slightly smaller */
+.vc-chip--pos {
+  font-size: 0.72rem;
+}

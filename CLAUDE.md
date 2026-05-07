@@ -240,6 +240,7 @@ CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production
 | Listening practice              | Done — ListeningPage + ListeningSessionPage + listening controller + Web Speech TTS + 4-choice quiz ✓ |
 | Daily Vocab Quiz (Phase 13)     | Done — DailyQuizPage + DailyQuizSessionPage + DailyQuizCard + daily_quiz_logs ✓ (pulls from vocab_cards) |
 | Profile page (Phase 14)         | Done — ProfilePage: initials avatar, preferred_level (user_metadata), stats, logout ✓ |
+| Vocab Search & Filter (Phase 18) | Done — VocabPage: search input + level chips (N5–N1) + POS chips; client-side filter via useMemo ✓ |
 | Grammar lessons (N4–N1 seed)    | Pending — need Anthropic API credits to complete                             |
 
 ---
@@ -247,6 +248,7 @@ CORS allows `http://localhost:5173` (dev) and `FRONTEND_URL` env var (production
 ## Features Planned
 
 - N4–N1 grammar lessons (pending Anthropic API credits)
+- Streak calendar on ProgressPage (90-day GitHub-style activity grid)
 
 ---
 
@@ -470,6 +472,10 @@ Do not mix module systems between client and server.
 
 ## Last Working On
 
+- Phase 18 — Vocab Search & Filter (2026-05-07) — complete ✓
+  - `VocabPage.jsx`: `searchTerm` + `filterLevel` + `filterPOS` state; `filteredCards` via `useMemo`; search input + level chips (N5–N1/ทั้งหมด) + POS chips (dynamic, from card data); title shows `n/total` when filtering; resets filters on deck change
+  - `App.css`: `.vc-search-wrap`, `.vc-search-input`, `.vc-filter-row`, `.vc-chip`, `.vc-chip--active`, `.vc-chip--pos`
+  - No backend changes — pure client-side filter
 - Code review fixes (2026-05-02) — complete ✓
   - `deck.controller.js`: JLPT rename guard (403) + response shape `{ deck: data }`
   - `vocab.controller.js`: `addVocabCard` pre-check before insert
